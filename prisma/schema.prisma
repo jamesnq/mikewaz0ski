@@ -20,27 +20,32 @@ enum BuyerPlatform {
 }
 
 model Buyer {
-  id              String            @id @map("_id")
-  platform        BuyerPlatform
-  buyerId         String
-  username        String?
-  BrawlCoinsOrder BrawlCoinsOrder[]
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  platform       BuyerPlatform
+  platformUserId String
+  username       String?
+  Orders         Order[]
 
-  @@unique([platform, id])
+  @@unique([platform, platformUserId])
 }
 
 enum OrderStatus {
   Pending
+  InProcess
   Completed
   Cancelled
 }
 
-model BrawlCoinsOrder {
+enum OderType {
+  BrawlCoins
+}
+
+model Order {
   id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  type      OderType
   Buyer     Buyer       @relation(fields: [buyerId], references: [id])
-  email     String
-  pass      String
+  buyerId   String      @db.ObjectId
+  data      Json
   status    OrderStatus @default(Pending)
   createdAt DateTime    @default(now())
-  buyerId   String
 }
