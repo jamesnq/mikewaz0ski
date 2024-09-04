@@ -5,8 +5,7 @@ import discordBot from "@/services/bot/discord/discord-bot";
 import telegramBot from "@/services/bot/telegram-bot";
 import { z } from "zod";
 export async function loader({ request }: LoaderFunctionArgs) {
-  if (process.env.NODE_ENV === "production") return;
-
-  console.log("🚀 ~ loader ~ discordBot.user?:", discordBot.user);
+  discordBot;
+  telegramBot;
   return new Response("ok");
 }

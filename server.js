@@ -1,10 +1,15 @@
+import { config } from "dotenv";
+config();
 import { createRequestHandler } from "@remix-run/express";
 import { installGlobals } from "@remix-run/node";
 import compression from "compression";
 import express from "express";
 import morgan from "morgan";
 import { envVariables } from "./env-loader.js";
+import axios from "axios";
 envVariables.parse(process.env);
+// Launch bot
+
 installGlobals();
 
 const viteDevServer =
@@ -18,6 +23,7 @@ const viteDevServer =
 
 // Create a request handler for Remix
 const remixHandler = createRequestHandler({
+  // @ts-ignore
   build: viteDevServer
     ? () => viteDevServer.ssrLoadModule("virtual:remix/server-build")
     : () => import("./build/server/index.js"),
@@ -49,8 +55,23 @@ app.use(morgan("tiny"));
 
 // handle SSR requests
 app.all("*", remixHandler);
+// Function to make a request to /start-bot
+const notifyStart = async () => {
+  try {
+    await axios.get(`http://localhost:${port}/start-bot`);
+    console.log("Requested /start-bot");
+  } catch (error) {
+    console.error("Error requesting /start-bot:", error);
+  }
+};
 
+if (viteDevServer) {
+  viteDevServer.watcher.on("change", async () => {
+    await notifyStart();
+  });
+}
 const port = process.env.PORT || 3000;
-app.listen(port, () =>
-  console.log(`Express server listening at http://localhost:${port}`)
-);
+app.listen(port, async () => {
+  console.log(`Express server listening at http://localhost:${port}`);
+  await notifyStart();
+});

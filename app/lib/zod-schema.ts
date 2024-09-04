@@ -36,3 +36,6 @@ export const CreateOrderSchema = z
       };
     }
   );
+export const OrderConfirmRequest = z.object({
+  orderId: z.string(),
+});

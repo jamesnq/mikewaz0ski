@@ -10,7 +10,7 @@ export const envVariables = z.object({
   DISCORD_GUILD_ID: z.string(),
   // Telegram
   TELEGRAM_TOKEN: z.string(),
-  TELEGRAM_USER_ID: z.string(),
+  TELEGRAM_CHAT_ID: z.string(),
 
   /**For encrypt key or private stuff */
   AES256CBC_KEY: z.string().length(32),
