@@ -7,8 +7,8 @@ import express from "express";
 import morgan from "morgan";
 import { envVariables } from "./env-loader.js";
 import axios from "axios";
+
 envVariables.parse(process.env);
-// Launch bot
 
 installGlobals();
 
@@ -65,11 +65,6 @@ const notifyStart = async () => {
   }
 };
 
-if (viteDevServer) {
-  viteDevServer.watcher.on("change", async () => {
-    await notifyStart();
-  });
-}
 const port = process.env.PORT || 3000;
 app.listen(port, async () => {
   console.log(`Express server listening at http://localhost:${port}`);

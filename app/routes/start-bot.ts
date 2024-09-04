@@ -1,11 +1,19 @@
-import { CreateOrderSchema } from "@/lib/zod-schema";
-import prisma from "@/services/db.server";
-import { LoaderFunctionArgs } from "@remix-run/node";
 import discordBot from "@/services/bot/discord/discord-bot";
 import telegramBot from "@/services/bot/telegram-bot";
-import { z } from "zod";
+import { LoaderFunctionArgs } from "@remix-run/node";
+
 export async function loader({ request }: LoaderFunctionArgs) {
-  discordBot;
-  telegramBot;
-  return new Response("ok");
+  if (discordBot.isReady()) return "ok";
+
+  discordBot.login(process.env.DISCORD_TOKEN);
+
+  telegramBot
+    .launch(() => {
+      console.log("Telegram bot is running...");
+    })
+    .catch((error) => {
+      console.error("Failed to launch bot:", error);
+    });
+
+  return "ok";
 }
