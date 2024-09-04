@@ -11,5 +11,8 @@
 	},
 	"[prisma]": {
 		"editor.defaultFormatter": "Prisma.prisma"
+	},
+	"[dotenv]": {
+		"editor.defaultFormatter": "foxundermoon.shell-format"
 	}
 }

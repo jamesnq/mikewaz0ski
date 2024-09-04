@@ -13,6 +13,22 @@ datasource db {
   url      = env("MONGO_URI")
 }
 
+enum BuyerPlatform {
+  Discord
+  Telegram
+  Facebook
+}
+
+model Buyer {
+  id              String            @id @map("_id")
+  platform        BuyerPlatform
+  buyerId         String
+  username        String?
+  BrawlCoinsOrder BrawlCoinsOrder[]
+
+  @@unique([platform, id])
+}
+
 enum OrderStatus {
   Pending
   Completed
@@ -21,9 +37,10 @@ enum OrderStatus {
 
 model BrawlCoinsOrder {
   id        String      @id @default(auto()) @map("_id") @db.ObjectId
-  discordId String
+  Buyer     Buyer       @relation(fields: [buyerId], references: [id])
   email     String
   pass      String
   status    OrderStatus @default(Pending)
   createdAt DateTime    @default(now())
+  buyerId   String
 }
