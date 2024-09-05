@@ -38,6 +38,9 @@ enum OrderStatus {
 
 enum OderType {
   BrawlCoins
+  YoutubePremium
+  Spotify
+  DiscordNitro
 }
 
 model Order {
