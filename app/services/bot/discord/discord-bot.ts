@@ -5,7 +5,9 @@ import {
   GatewayIntentBits,
 } from "discord.js";
 import { commands } from "./commands";
-import { handleButtonInteraction } from "./commands/order-create";
+import { ConfirmButtonHandler } from "./handler/confirmBtnHandler";
+import { SendCodeButtonHandler } from "./handler/sendCodeBtnHandler";
+import { SendCodeModalSubmit } from "./handler/sendCodeModalSubmit";
 
 const discordBot = new Client({
   intents: [
@@ -45,7 +47,20 @@ discordBot.on("interactionCreate", async (interaction) => {
 });
 
 discordBot.on(Events.InteractionCreate, async (interaction) => {
-  handleButtonInteraction(interaction as unknown as ButtonInteraction);
+  if (interaction.isButton()) {
+    if (interaction.customId?.startsWith("confirm_order_id_")) {
+      ConfirmButtonHandler(interaction as unknown as ButtonInteraction);
+    }
+    if (interaction.customId?.startsWith("open_order_verify_code")) {
+      SendCodeButtonHandler(interaction as unknown as ButtonInteraction);
+    }
+  }
+
+  if (interaction.isModalSubmit()) {
+    if (interaction.customId?.includes("verification-code-modal")) {
+      SendCodeModalSubmit(interaction as unknown as ButtonInteraction);
+    }
+  }
 });
 
 export default discordBot;

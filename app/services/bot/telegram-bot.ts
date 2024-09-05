@@ -20,7 +20,7 @@ telegramBot.on("callback_query", async (ctx: Context) => {
 
     const button = new ButtonBuilder()
       .setCustomId(`open_order_verify_code|${dbOrder.id}`)
-      .setLabel("Mở Form Nhập Code")
+      .setLabel("Enter Verification Code")
       .setStyle(ButtonStyle.Primary);
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);

@@ -22,11 +22,12 @@ export const CreateOrderSchema = z
       username: z.string().optional(),
     }),
 
-    data: z.union([YoutubePremiumDataSchema, BrawlCoinsDataSchema]),
+    data: z.any(),
   })
   .refine(
     (data) => {
       if (data.type === "BrawlCoins") {
+        console.log("🚀 ~ data.data:", data.data);
         return BrawlCoinsDataSchema.safeParse(data.data).success;
       }
       if (data.type === "YoutubePremium") {
