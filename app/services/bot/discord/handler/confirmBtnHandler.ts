@@ -11,7 +11,6 @@ import { Markup } from "telegraf";
 import telegramBot from "../../telegram-bot";
 
 export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
-  console.log("🚀 ~ ConfirmButtonHandler ~ interaction:", interaction);
   try {
     if (interaction.customId?.startsWith("confirm_order_id_")) {
       const userId = interaction.member?.user.id || interaction.user.id;
@@ -40,27 +39,65 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
           const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
             button
           );
-          const telegramResponse = telegramBot.telegram.sendMessage(
+          const telegramResponse = await telegramBot.telegram.sendMessage(
             process.env.TELEGRAM_CHAT_ID,
-            JSON.stringify(
-              {
-                orderId: dbOrder.id,
-                ...data,
-                password: aes256cbc.decrypt(data.password),
-              },
-              null,
-              2
-            ),
+            `==========ĐƠN NẠP MỚI==========\n\nMã đơn: ${dbOrder.id}\nEmail: ${
+              data.email
+            }\nMật khẩu: ${aes256cbc.decrypt(data.password)}\nGói: ${
+              data.pack
+            }`,
             Markup.inlineKeyboard([
               [
                 Markup.button.callback(
-                  "Verify code",
-                  `order_verify_code|${dbOrder.id}`
+                  "Yêu cầu code",
+                  `order_verify_code|${dbOrder.id}|MESSAGE_ID`
                 ),
               ],
-              [Markup.button.callback("Finish", `order_finish|${dbOrder.id}`)],
+              [
+                Markup.button.callback(
+                  "Thông báo đã vào được",
+                  `notify_in|${dbOrder.id}`
+                ),
+              ],
+              [
+                Markup.button.callback(
+                  "Hoàn thành đơn",
+                  `order_finish|${dbOrder.id}|MESSAGE_ID`
+                ),
+              ],
             ])
           );
+          const messageId = telegramResponse.message_id;
+          console.log("🚀 ~ ConfirmButtonHandler ~ messageId:", messageId);
+
+          await telegramBot.telegram.editMessageReplyMarkup(
+            process.env.TELEGRAM_CHAT_ID,
+            messageId,
+            undefined,
+            {
+              inline_keyboard: Markup.inlineKeyboard([
+                [
+                  Markup.button.callback(
+                    "Yêu cầu code",
+                    `order_verify_code|${dbOrder.id}|${messageId}`
+                  ),
+                ],
+                [
+                  Markup.button.callback(
+                    "Thông báo đã vào được",
+                    `notify_in|${dbOrder.id}`
+                  ),
+                ],
+                [
+                  Markup.button.callback(
+                    "Hoàn thành đơn",
+                    `order_finish|${dbOrder.id}|${messageId}`
+                  ),
+                ],
+              ]).reply_markup.inline_keyboard, // Extract the inline_keyboard from the Markup object
+            }
+          );
+
           const [] = await Promise.all([
             interaction.reply({
               content: `Confirm success order id ${dbOrder.id}`,
