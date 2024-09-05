@@ -1,6 +1,11 @@
 import { $Enums } from "@prisma/client";
 import { z } from "zod";
 
+export const YoutubePremiumDataSchema = z.object({
+  email: z.string().email(),
+});
+export type YoutubePremiumData = z.infer<typeof YoutubePremiumDataSchema>;
+
 export const BrawlCoinsDataSchema = z.object({
   email: z.string().email(),
   password: z.string(),
@@ -16,18 +21,18 @@ export const CreateOrderSchema = z
       platformUserId: z.string(),
       username: z.string().optional(),
     }),
-    data: BrawlCoinsDataSchema,
-    // data: z.union([
-    //   z.object({}), // An empty object schema for non-BrawlCoins types
-    //   BrawlCoinsDataSchema,
-    // ]),
+
+    data: z.union([YoutubePremiumDataSchema, BrawlCoinsDataSchema]),
   })
   .refine(
     (data) => {
       if (data.type === "BrawlCoins") {
         return BrawlCoinsDataSchema.safeParse(data.data).success;
       }
-      return true;
+      if (data.type === "YoutubePremium") {
+        return YoutubePremiumDataSchema.safeParse(data.data).success;
+      }
+      return false;
     },
     (data) => {
       return {

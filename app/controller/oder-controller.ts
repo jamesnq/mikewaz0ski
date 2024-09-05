@@ -7,7 +7,7 @@ class OrderController {
     const order = CreateOrderSchema.parse(data);
     return await prisma.order.create({
       data: {
-        type: "BrawlCoins",
+        type: order.type,
         Buyer: {
           connectOrCreate: {
             where: {
@@ -37,7 +37,6 @@ class OrderController {
       );
     }
     if (order.type === "BrawlCoins") {
-      
     }
     return await prisma.order.update({
       where: { id: orderId },
