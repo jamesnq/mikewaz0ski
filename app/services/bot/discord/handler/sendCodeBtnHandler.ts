@@ -15,14 +15,15 @@ import { Markup } from "telegraf";
 import telegramBot from "../../telegram-bot";
 
 export async function SendCodeButtonHandler(interaction: ButtonInteraction) {
-  console.log("🚀 ~ SendCodeButtonHandler ~ interaction:", interaction);
-  console.log("Run to this");
+  const btnId = interaction.customId;
+  const messageId = btnId.split("|")[2];
+  console.log("🚀 ~ SendCodeButtonHandler ~ messageId:", messageId);
   const modal = new ModalBuilder()
-    .setCustomId("verification-code-modal")
+    .setCustomId(`verification-code-modal|${messageId}`)
     .setTitle("Enter Verification Code");
 
   const verificationCode = new TextInputBuilder()
-    .setCustomId("verifyCode")
+    .setCustomId(`verifyCode`)
     // The label is the prompt the user sees for this input
     .setLabel("Enter code received from phone/phone number")
     // Short means only a single line of text

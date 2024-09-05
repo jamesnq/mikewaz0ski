@@ -3,6 +3,7 @@ import {
   Client,
   Events,
   GatewayIntentBits,
+  ModalSubmitInteraction,
 } from "discord.js";
 import { commands } from "./commands";
 import { ConfirmButtonHandler } from "./handler/confirmBtnHandler";
@@ -58,7 +59,7 @@ discordBot.on(Events.InteractionCreate, async (interaction) => {
 
   if (interaction.isModalSubmit()) {
     if (interaction.customId?.includes("verification-code-modal")) {
-      SendCodeModalSubmit(interaction as unknown as ButtonInteraction);
+      SendCodeModalSubmit(interaction as unknown as ModalSubmitInteraction);
     }
   }
 });
