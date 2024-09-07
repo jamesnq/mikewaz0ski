@@ -10,12 +10,12 @@ export const envVariables = z.object({
   DISCORD_GUILD_ID: z.string(),
   DISCORD_ADMIN: z
     .string()
-
     .transform((data) => {
       const admin = z.array(z.string()).parse(JSON.parse(data));
       process.env.DISCORD_ADMIN = admin;
       return admin;
     }),
+  REQUIRED_ROLE_ID: z.string(),
   // Telegram
   TELEGRAM_TOKEN: z.string(),
   TELEGRAM_CHAT_ID: z.string(),
