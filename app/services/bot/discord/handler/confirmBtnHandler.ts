@@ -13,12 +13,12 @@ import telegramBot from "../../telegram-bot";
 const requireRoleId = process.env.REQUIRED_ROLE_ID;
 export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
   try {
-    const member = interaction.guild?.members.cache.get(interaction.user.id);
     if (interaction.customId?.startsWith("confirm_order_id_")) {
       const userId = interaction.member?.user.id || interaction.user.id;
+      const member = interaction.guild?.members.cache.get(userId);
       if (
         !process.env.DISCORD_ADMIN.includes(userId) ||
-        !member?.roles.cache.has(requireRoleId)
+        member?.roles.cache.has(requireRoleId)
       ) {
         return await interaction.reply({
           content: "Confirm fail only admin can confirm!",
