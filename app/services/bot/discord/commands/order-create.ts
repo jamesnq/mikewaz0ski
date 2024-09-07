@@ -84,7 +84,7 @@ export async function execute(interaction: CommandInteraction) {
 
   // Send the reply message with the button
   await interaction.reply({
-    content: "Order created successfully! waiting for admin confirm order",
+    content: "Order created successfully! Waiting for admin confirm order",
     components: [row],
   });
 }
