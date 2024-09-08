@@ -25,6 +25,13 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
         "🚀 ~ ConfirmButtonHandler ~ !process.env.DISCORD_ADMIN.includes(userId):",
         !process.env.DISCORD_ADMIN.includes(userId)
       );
+
+      console.log("🚀 ~ ConfirmButtonHandler ~ requireRoleId:", requireRoleId);
+
+      console.log(
+        "🚀 ~ ConfirmButtonHandler ~ member?.roles.cache:",
+        member?.roles.cache
+      );
       if (
         !process.env.DISCORD_ADMIN.includes(userId) ||
         member?.roles.cache.has(requireRoleId)
