@@ -3,10 +3,16 @@ import { z } from "zod";
 export const envVariables = z.object({
   /** Mongodb url */
   MONGO_URI: z.string(),
+  MONGO_URI_TEST: z.string(),
   // Discord
   DISCORD_TOKEN: z.string(),
   DISCORD_APPLICATION_ID: z.string(),
   DISCORD_PUBLIC_KEY: z.string(),
+
+  DISCORD_TOKEN_TEST: z.string(),
+  DISCORD_APPLICATION_ID_TEST: z.string(),
+  DISCORD_PUBLIC_KEY_TEST: z.string(),
+
   DISCORD_GUILD_ID: z.string(),
   DISCORD_ADMIN: z
     .string()
@@ -18,6 +24,8 @@ export const envVariables = z.object({
   REQUIRED_ROLE_ID: z.string(),
   // Telegram
   TELEGRAM_TOKEN: z.string(),
+  TELEGRAM_TOKEN_TEST: z.string(),
+
   TELEGRAM_CHAT_ID: z.string(),
 
   /**For encrypt key or private stuff */

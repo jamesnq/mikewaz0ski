@@ -4,6 +4,8 @@ import {
   ButtonStyle,
   CommandInteraction,
   SlashCommandBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
 } from "discord.js";
 
 import { z } from "zod";
@@ -57,7 +59,6 @@ export async function execute(interaction: CommandInteraction) {
   const password: string = interaction.options
     .get("password")
     ?.value?.toString()!;
-
   const userId: string = interaction.member?.user?.id || interaction.user.id;
   const username =
     interaction.member?.user.username || interaction.user.username;
@@ -70,21 +71,37 @@ export async function execute(interaction: CommandInteraction) {
     buyer: { platform: "Discord", platformUserId: userId, username },
     data: { email, password, pack: selectedPackage },
   });
+  console.log("🚀 ~ execute ~ order:", order);
   if (!order) throw new Error("Create order fail something wrong!");
 
   // Create a button to copy the order ID
   const button = new ButtonBuilder()
     .setCustomId(`confirm_order_id_${order.id}`) // Custom ID to handle the button interaction
-
     .setLabel("Confirm")
     .setStyle(ButtonStyle.Primary);
 
+  const locationSelect = new StringSelectMenuBuilder()
+    .setCustomId(`select_location_${order.id}`)
+    .setPlaceholder("Admin choose location")
+    .addOptions(
+      new StringSelectMenuOptionBuilder()
+        .setLabel("VN")
+        .setDescription("Choose if your location is Vietnam")
+        .setValue("VN"),
+      new StringSelectMenuOptionBuilder()
+        .setLabel("US")
+        .setDescription("Choose if your location is not Vietnam")
+        .setValue("US")
+    );
   // Create an action row to hold the button
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
-
+  const selecRow =
+    new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+      locationSelect
+    );
   // Send the reply message with the button
   await interaction.reply({
     content: "Order created successfully! Waiting for admin confirm order",
-    components: [row],
+    components: [selecRow, row],
   });
 }

@@ -31,7 +31,7 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
         const dbOrder = await prisma.order.update({
           where: { id: orderId, status: "Pending" },
           data: { status: "InProcess" },
-          select: { id: true, data: true, type: true },
+          select: { id: true, data: true, type: true, location: true },
         });
 
         if (dbOrder.type == "BrawlCoins") {
@@ -44,62 +44,61 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
           const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
             button
           );
+
+          const decryptedPassword = aes256cbc.decrypt(data.password);
+          const messageText = `==========ĐƠN NẠP MỚI==========\n\nMã đơn: ${orderId}\nEmail: ${data.email}\nMật khẩu: ${decryptedPassword}\nGói: ${data.pack}\nĐơn: ${dbOrder.location}`;
+          let inlineKeyboard = Markup.inlineKeyboard([
+            [
+              Markup.button.callback(
+                "Yêu cầu code",
+                `order_verify_code|${dbOrder.id}|MESSAGE_ID`
+              ),
+            ],
+            [
+              Markup.button.callback(
+                "Thông báo đã vào được",
+                `notify_in|${dbOrder.id}`
+              ),
+            ],
+            [
+              Markup.button.callback(
+                "Hoàn thành đơn",
+                `order_finish|${dbOrder.id}|MESSAGE_ID`
+              ),
+            ],
+          ]);
           const telegramResponse = await telegramBot.telegram.sendMessage(
             process.env.TELEGRAM_CHAT_ID,
-            `==========ĐƠN NẠP MỚI==========\n\nMã đơn: ${dbOrder.id}\nEmail: ${
-              data.email
-            }\nMật khẩu: ${aes256cbc.decrypt(data.password)}\nGói: ${
-              data.pack
-            }`,
-            Markup.inlineKeyboard([
-              [
-                Markup.button.callback(
-                  "Yêu cầu code",
-                  `order_verify_code|${dbOrder.id}|MESSAGE_ID`
-                ),
-              ],
-              [
-                Markup.button.callback(
-                  "Thông báo đã vào được",
-                  `notify_in|${dbOrder.id}`
-                ),
-              ],
-              [
-                Markup.button.callback(
-                  "Hoàn thành đơn",
-                  `order_finish|${dbOrder.id}|MESSAGE_ID`
-                ),
-              ],
-            ])
+            messageText,
+            inlineKeyboard
           );
           const messageId = telegramResponse.message_id;
-          console.log("🚀 ~ ConfirmButtonHandler ~ messageId:", messageId);
-
+          inlineKeyboard = Markup.inlineKeyboard([
+            [
+              Markup.button.callback(
+                "Yêu cầu code",
+                `order_verify_code|${dbOrder.id}|${messageId}`
+              ),
+            ],
+            [
+              Markup.button.callback(
+                "Thông báo đã vào được",
+                `notify_in|${dbOrder.id}`
+              ),
+            ],
+            [
+              Markup.button.callback(
+                "Hoàn thành đơn",
+                `order_finish|${dbOrder.id}|${messageId}`
+              ),
+            ],
+          ]);
           await telegramBot.telegram.editMessageReplyMarkup(
             process.env.TELEGRAM_CHAT_ID,
             messageId,
             undefined,
             {
-              inline_keyboard: Markup.inlineKeyboard([
-                [
-                  Markup.button.callback(
-                    "Yêu cầu code",
-                    `order_verify_code|${dbOrder.id}|${messageId}`
-                  ),
-                ],
-                [
-                  Markup.button.callback(
-                    "Thông báo đã vào được",
-                    `notify_in|${dbOrder.id}`
-                  ),
-                ],
-                [
-                  Markup.button.callback(
-                    "Hoàn thành đơn",
-                    `order_finish|${dbOrder.id}|${messageId}`
-                  ),
-                ],
-              ]).reply_markup.inline_keyboard, // Extract the inline_keyboard from the Markup object
+              inline_keyboard: inlineKeyboard.reply_markup.inline_keyboard, // Extract the inline_keyboard from the Markup object
             }
           );
 

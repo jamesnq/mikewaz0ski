@@ -1,14 +1,19 @@
 import { Context, Telegraf } from "telegraf";
 import prisma from "../db.server";
 import discordBot from "./discord/discord-bot";
-import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
+import {
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+  AttachmentBuilder,
+} from "discord.js";
 import { join } from "path";
 import { unlink } from "fs/promises";
 import { createWriteStream } from "fs";
 import axios from "axios";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-const telegramBot = new Telegraf(process.env.TELEGRAM_TOKEN);
+const telegramBot = new Telegraf(process.env.TELEGRAM_TOKEN_TEST);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -95,49 +100,25 @@ telegramBot.on("photo", async (ctx) => {
     const fileId = highestResPhoto.file_id;
     const fileLink = await ctx.telegram.getFileLink(fileId);
 
-    const fileName = `order_${orderId}_${messageId}.jpg`;
-    const filePath = join(__dirname, fileName);
-
-    const fileStream = createWriteStream(filePath);
-    const response = await axios({
-      method: "get",
-      url: fileLink.href, // Axios expects a URL string, not a URL object, hence use `fileLink.href`
-      responseType: "stream", // Stream the response directly
+    const dbOrder = await prisma.order.update({
+      where: { id: orderId, status: "InProcess" },
+      data: { status: "Completed" },
+      include: { Buyer: true },
     });
-    response.data.pipe(fileStream);
 
-    fileStream.on("finish", async () => {
-      const dbOrder = await prisma.order.update({
-        where: { id: orderId, status: "InProcess" },
-        data: { status: "Completed" },
-        include: { Buyer: true },
-      });
-      const user = await discordBot.users.fetch(dbOrder.Buyer.platformUserId);
-
-      // Send the file to the Discord user
-      const message = await user.send({
-        content: `Your order with order ID: ${orderId} has finished. Thanks for your purchase! Please vouch for us!`,
-        files: [
-          {
-            attachment: filePath,
-            name: fileName, // You can name it whatever you want or derive it from the original file name
-          },
-        ],
-      });
-
-      if (message) {
-        await ctx.reply("Ảnh đã được gửi cho khách.");
-      } else {
-        await ctx.reply("Failed to send the notification.");
-      }
-
-      pendingPhotos.delete(userId);
-      await unlink(filePath);
-      console.log("Deleted");
+    const user = await discordBot.users.fetch(dbOrder.Buyer.platformUserId);
+    // Send the file to the Discord user
+    const message = await user.send({
+      content: `Your order with order ID: ${orderId} has finished. Thanks for your purchase! Please vouch for us!\n${fileLink}`,
     });
-    fileStream.on("error", (error) => {
-      console.error("Error writing the file:", error);
-    });
+
+    if (message) {
+      await ctx.reply("Ảnh đã được gửi cho khách.");
+    } else {
+      await ctx.reply("Failed to send the notification.");
+    }
+
+    pendingPhotos.delete(userId);
   }
 });
 
