@@ -99,6 +99,7 @@ telegramBot.on("photo", async (ctx) => {
     const highestResPhoto = photo[photo.length - 1];
     const fileId = highestResPhoto.file_id;
     const fileLink = await ctx.telegram.getFileLink(fileId);
+    console.log("🚀 ~ telegramBot.on ~ fileLink:", fileLink);
 
     const dbOrder = await prisma.order.update({
       where: { id: orderId, status: "InProcess" },
