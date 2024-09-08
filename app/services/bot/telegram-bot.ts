@@ -101,8 +101,6 @@ telegramBot.on("photo", async (ctx) => {
     } else {
       await ctx.reply("Gửi không thành công.");
     }
-  } else {
-    ctx.reply("Trả lời vào tin nhắn yêu cầu gửi ảnh!");
   }
 });
 
