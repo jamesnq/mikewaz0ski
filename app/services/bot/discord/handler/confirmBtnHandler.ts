@@ -16,6 +16,15 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
     if (interaction.customId?.startsWith("confirm_order_id_")) {
       const userId = interaction.member?.user.id || interaction.user.id;
       const member = interaction.guild?.members.cache.get(userId);
+      console.log("🚀 ~ ConfirmButtonHandler ~ member:", member);
+      console.log(
+        "🚀 ~ ConfirmButtonHandler ~ member?.roles.cache.has(requireRoleId):",
+        member?.roles.cache.has(requireRoleId)
+      );
+      console.log(
+        "🚀 ~ ConfirmButtonHandler ~ !process.env.DISCORD_ADMIN.includes(userId):",
+        !process.env.DISCORD_ADMIN.includes(userId)
+      );
       if (
         !process.env.DISCORD_ADMIN.includes(userId) ||
         member?.roles.cache.has(requireRoleId)
