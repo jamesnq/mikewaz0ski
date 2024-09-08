@@ -3,6 +3,7 @@ import { z } from "zod";
 export const envVariables = z.object({
   /** Mongodb url */
   MONGO_URI: z.string(),
+  MONGO_URI_TEST: z.string(),
   // Discord
   DISCORD_TOKEN: z.string(),
   DISCORD_APPLICATION_ID: z.string(),

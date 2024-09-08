@@ -11,6 +11,7 @@ generator client {
 datasource db {
   provider = "mongodb"
   url      = env("MONGO_URI")
+  // url      = env("MONGO_URI_TEST")
 }
 
 enum BuyerPlatform {
@@ -43,11 +44,6 @@ enum OderType {
   DiscordNitro
 }
 
-enum Location {
-  US
-  VN
-}
-
 model Order {
   id        String      @id @default(auto()) @map("_id") @db.ObjectId
   type      OderType
@@ -56,5 +52,4 @@ model Order {
   data      Json
   status    OrderStatus @default(Pending)
   createdAt DateTime    @default(now())
-  location  Location    @default(US)
 }

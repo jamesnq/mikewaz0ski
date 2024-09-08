@@ -11,7 +11,6 @@ import { ConfirmButtonHandler } from "./handler/confirmBtnHandler";
 import { SendCodeButtonHandler } from "./handler/sendCodeBtnHandler";
 import { SendCodeModalSubmit } from "./handler/sendCodeModalSubmit";
 import { deployCommands } from "./deploy-commands";
-import { LocationSelectMenu } from "./handler/locationSelectMenu";
 
 const discordBot = new Client({
   intents: [
@@ -67,12 +66,6 @@ discordBot.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.isModalSubmit()) {
     if (interaction.customId?.includes("verification-code-modal")) {
       SendCodeModalSubmit(interaction as unknown as ModalSubmitInteraction);
-    }
-  }
-
-  if (interaction.isStringSelectMenu()) {
-    if (interaction.customId?.includes("select_location")) {
-      LocationSelectMenu(interaction as unknown as StringSelectMenuInteraction);
     }
   }
 });
