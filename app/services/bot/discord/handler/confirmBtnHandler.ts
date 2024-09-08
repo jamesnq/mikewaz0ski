@@ -114,7 +114,7 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
         }
       } catch (error) {
         return await interaction.reply({
-          content: "Confirm fail order not found!",
+          content: (error as Error).message,
           options: { ephemeral: true },
         });
       }

@@ -1,27 +1,11 @@
 import { Context, Telegraf } from "telegraf";
 import prisma from "../db.server";
 import discordBot from "./discord/discord-bot";
-import {
-  ButtonBuilder,
-  ButtonStyle,
-  ActionRowBuilder,
-  AttachmentBuilder,
-} from "discord.js";
-import { join } from "path";
-import { unlink } from "fs/promises";
-import { createWriteStream } from "fs";
-import axios from "axios";
+import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
 import { fileURLToPath } from "url";
-import { dirname } from "path";
 const telegramBot = new Telegraf(process.env.TELEGRAM_TOKEN);
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const pendingPhotos = new Map<string, { orderId: string; messageId: string }>();
-
 telegramBot.on("callback_query", async (ctx: Context) => {
-  console.log(ctx);
-
   if (!ctx.callbackQuery || !("data" in ctx.callbackQuery)) return;
   const data = ctx.callbackQuery.data;
   if (data.startsWith("order_verify_code")) {
@@ -85,29 +69,21 @@ telegramBot.on("callback_query", async (ctx: Context) => {
     if (!orderId || !messageId)
       return await ctx.answerCbQuery("Mã đơn hoặc mã tin nhắn không xác định");
 
-    // Store orderId and messageId for the current user to await their photo upload
-    pendingPhotos.set(ctx.from!.id.toString(), { orderId, messageId });
-
     await ctx.reply(`Gửi ảnh hoàn thành đơn (Mã đơn: ${orderId})`);
   }
 });
 
 telegramBot.on("photo", async (ctx) => {
-  const userId = ctx.from.id.toString();
-  console.log("🚀 ~ telegramBot.on ~ userId:", userId);
-
-  if (pendingPhotos.has(userId)) {
-    const { orderId, messageId } = pendingPhotos.get(userId)!;
-    console.log("🚀 ~ telegramBot.on ~ orderId:", orderId);
+  const repliedMessage = ctx.message.reply_to_message;
+  if (repliedMessage) {
+    // Skip the error message
+    const message = repliedMessage.text;
+    const match = message.match(/\(Mã đơn: (\w+)\)$/);
+    const orderId = match[1];
     const photo = ctx.message.photo;
-    console.log("🚀 ~ telegramBot.on ~ photo:", photo);
     const highestResPhoto = photo[photo.length - 1];
-    console.log("🚀 ~ telegramBot.on ~ highestResPhoto:", highestResPhoto);
     const fileId = highestResPhoto.file_id;
-    console.log("🚀 ~ telegramBot.on ~ fileId:", fileId);
     const fileLink = await ctx.telegram.getFileLink(fileId);
-    console.log("🚀 ~ telegramBot.on ~ fileLink:", fileLink);
-
     const dbOrder = await prisma.order.update({
       where: { id: orderId, status: "InProcess" },
       data: { status: "Completed" },
@@ -116,17 +92,17 @@ telegramBot.on("photo", async (ctx) => {
 
     const user = await discordBot.users.fetch(dbOrder.Buyer.platformUserId);
     // Send the file to the Discord user
-    const message = await user.send({
+    const dcMessage = await user.send({
       content: `Your order with order ID: ${orderId} has finished. Thanks for your purchase! Please vouch for us!\n${fileLink}`,
     });
 
-    if (message) {
-      await ctx.reply("Ảnh đã được gửi cho khách.");
+    if (dcMessage) {
+      await ctx.reply(`Ảnh đã được gửi cho khách (Mã đơn: ${orderId}).`);
     } else {
-      await ctx.reply("Failed to send the notification.");
+      await ctx.reply("Gửi không thành công.");
     }
-
-    pendingPhotos.delete(userId);
+  } else {
+    ctx.reply("Trả lời vào tin nhắn yêu cầu gửi ảnh!");
   }
 });
 
