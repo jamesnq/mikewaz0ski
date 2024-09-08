@@ -92,12 +92,17 @@ telegramBot.on("callback_query", async (ctx: Context) => {
 
 telegramBot.on("photo", async (ctx) => {
   const userId = ctx.from.id.toString();
+  console.log("🚀 ~ telegramBot.on ~ userId:", userId);
 
   if (pendingPhotos.has(userId)) {
     const { orderId, messageId } = pendingPhotos.get(userId)!;
+    console.log("🚀 ~ telegramBot.on ~ orderId:", orderId);
     const photo = ctx.message.photo;
+    console.log("🚀 ~ telegramBot.on ~ photo:", photo);
     const highestResPhoto = photo[photo.length - 1];
+    console.log("🚀 ~ telegramBot.on ~ highestResPhoto:", highestResPhoto);
     const fileId = highestResPhoto.file_id;
+    console.log("🚀 ~ telegramBot.on ~ fileId:", fileId);
     const fileLink = await ctx.telegram.getFileLink(fileId);
     console.log("🚀 ~ telegramBot.on ~ fileLink:", fileLink);
 
