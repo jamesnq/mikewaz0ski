@@ -20,6 +20,8 @@ const __dirname = dirname(__filename);
 const pendingPhotos = new Map<string, { orderId: string; messageId: string }>();
 
 telegramBot.on("callback_query", async (ctx: Context) => {
+  console.log(ctx);
+
   if (!ctx.callbackQuery || !("data" in ctx.callbackQuery)) return;
   const data = ctx.callbackQuery.data;
   if (data.startsWith("order_verify_code")) {
