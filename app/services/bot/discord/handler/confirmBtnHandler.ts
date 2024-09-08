@@ -34,7 +34,7 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
       );
       if (
         !process.env.DISCORD_ADMIN.includes(userId) ||
-        member?.roles.cache.has(requireRoleId)
+        !member?.roles.cache.has(requireRoleId)
       ) {
         return await interaction.reply({
           content: "Confirm fail only admin can confirm!",
