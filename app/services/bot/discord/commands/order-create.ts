@@ -81,10 +81,29 @@ export async function execute(interaction: CommandInteraction) {
 
   // Create an action row to hold the button
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
+  // const requiredRoleIds = z
+  //   .string()
+  //   .transform((data) => {
+  //     // Parse the string as a JSON array of strings
+  //     return z.array(z.string()).parse(JSON.parse(data));
+  //   })
+  //   .parse(process.env.REQUIRED_ROLE_ID); // Parse directly from environment variable
 
-  // Send the reply message with the button
+  // console.log("🚀 ~ execute ~ requiredRoleIds:", requiredRoleIds);
+  // const existingRoles = requiredRoleIds.filter((roleId) =>
+  //   interaction.guild?.roles.cache.has(roleId)
+  // );
+  // console.log("🚀 ~ execute ~ existingRoles:", existingRoles);
+  // const roleMentions = existingRoles
+  //   .map((roleId) => `<@&${roleId}>`)
+  //   .join(", ");
+  // console.log("🚀 ~ execute ~ roleMentions:", roleMentions);
+  // // Send the reply message with the button
+  // // ${
+  // //   roleMentions || ""
+  // // }
   await interaction.reply({
-    content: `Order created successfully! Waiting for admin confirm order <@&${process.env.REQUIRED_ROLE_ID}>`,
+    content: `Order created successfully! Waiting for admin confirm order `,
     components: [row],
   });
 }

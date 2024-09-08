@@ -5,8 +5,8 @@ import { LoaderFunctionArgs } from "@remix-run/node";
 export async function loader({ request }: LoaderFunctionArgs) {
   if (discordBot.isReady()) return "ok";
 
-  discordBot.login(process.env.DISCORD_TOKEN);
-  // discordBot.login(process.env.DISCORD_TOKEN_TEST);
+  // discordBot.login(process.env.DISCORD_TOKEN);
+  discordBot.login(process.env.DISCORD_TOKEN_TEST);
 
   telegramBot
     .launch(() => {

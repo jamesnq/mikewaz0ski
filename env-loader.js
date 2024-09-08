@@ -21,7 +21,11 @@ export const envVariables = z.object({
       process.env.DISCORD_ADMIN = admin;
       return admin;
     }),
-  REQUIRED_ROLE_ID: z.string(),
+  REQUIRED_ROLE_ID: z.string().transform((data) => {
+    const role = z.array(z.string()).parse(JSON.parse(data));
+    process.env.REQUIRED_ROLE_ID = role;
+    return role;
+  }),
   // Telegram
   TELEGRAM_TOKEN: z.string(),
   TELEGRAM_TOKEN_TEST: z.string(),

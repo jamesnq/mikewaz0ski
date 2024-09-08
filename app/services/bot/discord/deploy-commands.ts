@@ -3,7 +3,10 @@ import { commands } from "./commands";
 
 const commandsData = Object.values(commands).map((command) => command.data);
 
-const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
+const rest = new REST({ version: "10" }).setToken(
+  process.env.DISCORD_TOKEN_TEST
+);
+// const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 
 type DeployCommandsProps = {
   guildId: string;
@@ -15,7 +18,7 @@ export async function deployCommands({ guildId }: DeployCommandsProps) {
 
     await rest.put(
       Routes.applicationGuildCommands(
-        process.env.DISCORD_APPLICATION_ID,
+        process.env.DISCORD_APPLICATION_ID_TEST,
         guildId
       ),
       {
