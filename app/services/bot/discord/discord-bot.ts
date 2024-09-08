@@ -4,11 +4,14 @@ import {
   Events,
   GatewayIntentBits,
   ModalSubmitInteraction,
+  StringSelectMenuInteraction,
 } from "discord.js";
 import { commands } from "./commands";
 import { ConfirmButtonHandler } from "./handler/confirmBtnHandler";
 import { SendCodeButtonHandler } from "./handler/sendCodeBtnHandler";
 import { SendCodeModalSubmit } from "./handler/sendCodeModalSubmit";
+import { deployCommands } from "./deploy-commands";
+import { LocationSelectMenu } from "./handler/locationSelectMenu";
 
 const discordBot = new Client({
   intents: [
@@ -21,6 +24,10 @@ const discordBot = new Client({
 
 discordBot.on("ready", () => {
   console.log(`Logged in as ${discordBot?.user?.tag}!`);
+});
+
+discordBot.on("guildCreate", async (guild) => {
+  await deployCommands({ guildId: guild.id });
 });
 
 // Interaction event listener for handling commands
@@ -60,6 +67,12 @@ discordBot.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.isModalSubmit()) {
     if (interaction.customId?.includes("verification-code-modal")) {
       SendCodeModalSubmit(interaction as unknown as ModalSubmitInteraction);
+    }
+  }
+
+  if (interaction.isStringSelectMenu()) {
+    if (interaction.customId?.includes("select_location")) {
+      LocationSelectMenu(interaction as unknown as StringSelectMenuInteraction);
     }
   }
 });

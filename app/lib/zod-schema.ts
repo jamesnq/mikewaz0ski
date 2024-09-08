@@ -27,7 +27,6 @@ export const CreateOrderSchema = z
   .refine(
     (data) => {
       if (data.type === "BrawlCoins") {
-        console.log("🚀 ~ data.data:", data.data);
         return BrawlCoinsDataSchema.safeParse(data.data).success;
       }
       if (data.type === "YoutubePremium") {
