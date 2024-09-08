@@ -13,7 +13,7 @@ import { createWriteStream } from "fs";
 import axios from "axios";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-const telegramBot = new Telegraf(process.env.TELEGRAM_TOKEN_TEST);
+const telegramBot = new Telegraf(process.env.TELEGRAM_TOKEN);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
