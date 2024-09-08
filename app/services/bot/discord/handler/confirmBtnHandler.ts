@@ -31,7 +31,7 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
         const dbOrder = await prisma.order.update({
           where: { id: orderId, status: "Pending" },
           data: { status: "InProcess" },
-          select: { id: true, data: true, type: true, location: true },
+          select: { id: true, data: true, type: true },
         });
         if (dbOrder.type == "BrawlCoins") {
           const data = dbOrder.data as BrawlCoinsData;
@@ -45,7 +45,7 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
           );
           const count = await prisma.order.count();
           const decryptedPassword = aes256cbc.decrypt(data.password);
-          const messageText = `==========ĐƠN NẠP MỚI==========\n\nSTT: ${count}\nMã đơn: ${orderId}\nEmail: ${data.email}\nMật khẩu: ${decryptedPassword}\nGói: ${data.pack}\nĐơn: ${dbOrder.location}`;
+          const messageText = `==========ĐƠN NẠP MỚI==========\n\nSTT: ${count}\nMã đơn: ${orderId}\nEmail: ${data.email}\nMật khẩu: ${decryptedPassword}\nGói: ${data.pack}\n`;
           let inlineKeyboard = Markup.inlineKeyboard([
             [
               Markup.button.callback(

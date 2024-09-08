@@ -79,28 +79,12 @@ export async function execute(interaction: CommandInteraction) {
     .setLabel("Confirm")
     .setStyle(ButtonStyle.Primary);
 
-  const locationSelect = new StringSelectMenuBuilder()
-    .setCustomId(`select_location_${order.id}`)
-    .setPlaceholder("Admin choose location")
-    .addOptions(
-      new StringSelectMenuOptionBuilder()
-        .setLabel("VN")
-        .setDescription("Choose if your location is Vietnam")
-        .setValue("VN"),
-      new StringSelectMenuOptionBuilder()
-        .setLabel("US")
-        .setDescription("Choose if your location is not Vietnam")
-        .setValue("US")
-    );
   // Create an action row to hold the button
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
-  const selecRow =
-    new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-      locationSelect
-    );
+
   // Send the reply message with the button
   await interaction.reply({
-    content: "Order created successfully! Waiting for admin confirm order",
-    components: [selecRow, row],
+    content: `Order created successfully! Waiting for admin confirm order <@&${process.env.REQUIRED_ROLE_ID}>`,
+    components: [row],
   });
 }
