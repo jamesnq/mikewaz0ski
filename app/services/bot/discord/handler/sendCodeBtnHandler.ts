@@ -17,7 +17,6 @@ import telegramBot from "../../telegram-bot";
 export async function SendCodeButtonHandler(interaction: ButtonInteraction) {
   const btnId = interaction.customId;
   const messageId = btnId.split("|")[2];
-  console.log("🚀 ~ SendCodeButtonHandler ~ messageId:", messageId);
   const modal = new ModalBuilder()
     .setCustomId(`verification-code-modal|${messageId}`)
     .setTitle("Enter Verification Code");

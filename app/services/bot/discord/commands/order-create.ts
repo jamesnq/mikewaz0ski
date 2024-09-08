@@ -71,7 +71,6 @@ export async function execute(interaction: CommandInteraction) {
     buyer: { platform: "Discord", platformUserId: userId, username },
     data: { email, password, pack: selectedPackage },
   });
-  console.log("🚀 ~ execute ~ order:", order);
   if (!order) throw new Error("Create order fail something wrong!");
 
   // Create a button to copy the order ID

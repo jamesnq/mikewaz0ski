@@ -33,7 +33,6 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
           data: { status: "InProcess" },
           select: { id: true, data: true, type: true, location: true },
         });
-
         if (dbOrder.type == "BrawlCoins") {
           const data = dbOrder.data as BrawlCoinsData;
           const button = new ButtonBuilder()
@@ -44,9 +43,9 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
           const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
             button
           );
-
+          const count = await prisma.order.count();
           const decryptedPassword = aes256cbc.decrypt(data.password);
-          const messageText = `==========ĐƠN NẠP MỚI==========\n\nMã đơn: ${orderId}\nEmail: ${data.email}\nMật khẩu: ${decryptedPassword}\nGói: ${data.pack}\nĐơn: ${dbOrder.location}`;
+          const messageText = `==========ĐƠN NẠP MỚI==========\n\nSTT: ${count}\nMã đơn: ${orderId}\nEmail: ${data.email}\nMật khẩu: ${decryptedPassword}\nGói: ${data.pack}\nĐơn: ${dbOrder.location}`;
           let inlineKeyboard = Markup.inlineKeyboard([
             [
               Markup.button.callback(
@@ -67,6 +66,7 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
               ),
             ],
           ]);
+
           const telegramResponse = await telegramBot.telegram.sendMessage(
             process.env.TELEGRAM_CHAT_ID,
             messageText,
