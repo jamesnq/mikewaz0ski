@@ -31,7 +31,7 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
       try {
         const dbOrder = await prisma.order.update({
           where: { id: orderId, status: "Pending" },
-          data: { status: "InProcess" },
+          data: { status: "InQueue" },
           select: { id: true, data: true, type: true },
         });
         if (dbOrder.type == "BrawlCoins") {
