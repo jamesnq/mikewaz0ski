@@ -25,8 +25,8 @@ discordBot.on("ready", () => {
   console.log(`Logged in as ${discordBot?.user?.tag}!`);
 });
 
-discordBot.on("guildCreate", async (guild) => {
-  await deployCommands({ guildId: guild.id });
+discordBot.on("guildCreate", async () => {
+  await deployCommands();
 });
 
 // Interaction event listener for handling commands

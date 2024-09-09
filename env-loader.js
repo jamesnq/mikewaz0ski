@@ -8,8 +8,6 @@ export const envVariables = z.object({
   DISCORD_APPLICATION_ID: z.string(),
   DISCORD_PUBLIC_KEY: z.string(),
 
-  DISCORD_GUILD_ID: z.string(),
-
   // Telegram
   TELEGRAM_TOKEN: z.string(),
 

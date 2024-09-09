@@ -2,7 +2,7 @@
 .database
 .DS_Store
 .env
-product.env
+production.env
 *.log
 build
 node_modules

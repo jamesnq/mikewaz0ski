@@ -11,7 +11,8 @@
 		"fix": "biome check . --apply",
 		"lint": "biome check .",
 		"start": "cross-env NODE_ENV=production node ./server.js",
-		"typecheck": "tsc"
+		"typecheck": "tsc",
+		"deploy-commands": "npx tsx ./app/services/bot/discord/deploy-commands.ts"
 	},
 	"dependencies": {
 		"@prisma/client": "^5.19.1",
@@ -55,6 +56,7 @@
 		"postcss": "8.4.35",
 		"prisma": "^5.19.1",
 		"tailwindcss": "3.4.1",
+		"ts-node": "^10.9.2",
 		"typescript": "5.3.3",
 		"vite": "5.1.3",
 		"vite-env-only": "2.2.0",
