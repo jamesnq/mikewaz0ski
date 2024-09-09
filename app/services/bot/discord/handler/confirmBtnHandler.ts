@@ -9,22 +9,20 @@ import {
 } from "discord.js";
 import { Markup } from "telegraf";
 import telegramBot from "../../telegram-bot";
+import discordConfig from "@/config/discord-bot-config";
 
-const requireRoleId = process.env.REQUIRED_ROLE_ID;
 export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
   try {
     if (interaction.customId?.startsWith("confirm_order_id_")) {
       const userId = interaction.member?.user.id || interaction.user.id;
       const member = interaction.guild?.members.cache.get(userId);
-      console.log(!process.env.DISCORD_ADMIN.includes(userId));
-      console.log(!member?.roles.cache.has(requireRoleId));
-
+      const requiredRoleIds = discordConfig.confirmOrder.roles;
       if (
-        !process.env.DISCORD_ADMIN.includes(userId) ||
-        !member?.roles.cache.has(requireRoleId)
+        !discordConfig.confirmOrder.users.includes(userId) &&
+        !requiredRoleIds.some((roleId) => member?.roles.cache.has(roleId))
       ) {
         return await interaction.reply({
-          content: "Confirm fail only admin can confirm!",
+          content: "Confirm fail you don't have permission to confirm!",
           options: { ephemeral: true },
         });
       }
