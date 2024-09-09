@@ -8,8 +8,6 @@ import morgan from "morgan";
 import { envVariables } from "./env-loader.js";
 import axios from "axios";
 
-envVariables.parse(process.env);
-
 installGlobals();
 
 const viteDevServer =
@@ -64,6 +62,8 @@ const notifyStart = async () => {
     console.error("Error requesting /start-bot:", error);
   }
 };
+
+envVariables.parse(process.env);
 
 const port = process.env.PORT || 3000;
 app.listen(port, async () => {

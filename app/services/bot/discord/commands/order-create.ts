@@ -10,6 +10,7 @@ import {
 
 import { z } from "zod";
 import { orderController } from "@/controller/oder-controller";
+import discordConfig from "@/config/discord-bot-config";
 
 export const data = new SlashCommandBuilder()
   .setName("order")
@@ -81,29 +82,16 @@ export async function execute(interaction: CommandInteraction) {
 
   // Create an action row to hold the button
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
-  // const requiredRoleIds = z
-  //   .string()
-  //   .transform((data) => {
-  //     // Parse the string as a JSON array of strings
-  //     return z.array(z.string()).parse(JSON.parse(data));
-  //   })
-  //   .parse(process.env.REQUIRED_ROLE_ID); // Parse directly from environment variable
 
-  // console.log("🚀 ~ execute ~ requiredRoleIds:", requiredRoleIds);
-  // const existingRoles = requiredRoleIds.filter((roleId) =>
-  //   interaction.guild?.roles.cache.has(roleId)
-  // );
-  // console.log("🚀 ~ execute ~ existingRoles:", existingRoles);
-  // const roleMentions = existingRoles
-  //   .map((roleId) => `<@&${roleId}>`)
-  //   .join(", ");
-  // console.log("🚀 ~ execute ~ roleMentions:", roleMentions);
-  // // Send the reply message with the button
-  // // ${
-  // //   roleMentions || ""
-  // // }
+  const requiredRoleIds = discordConfig.confirmOrder.roles;
+  const existingRoleMentions = requiredRoleIds
+    .filter((roleId) => interaction.guild?.roles.cache.has(roleId)) // Check if the guild has each role
+    .map((roleId) => `<@&${roleId}>`) // Convert role IDs to mention format
+    .join(" ");
   await interaction.reply({
-    content: `Order created successfully! Waiting for admin confirm order `,
+    content: `Order created successfully! Waiting for admin confirm order ${
+      existingRoleMentions || ""
+    }`,
     components: [row],
   });
 }

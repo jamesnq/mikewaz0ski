@@ -3,8 +3,7 @@ import prisma from "../db.server";
 import discordBot from "./discord/discord-bot";
 import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
 import { fileURLToPath } from "url";
-// const telegramBot = new Telegraf(process.env.TELEGRAM_TOKEN);
-const telegramBot = new Telegraf(process.env.TELEGRAM_TOKEN_TEST);
+const telegramBot = new Telegraf(process.env.TELEGRAM_TOKEN);
 
 telegramBot.on("callback_query", async (ctx: Context) => {
   try {
