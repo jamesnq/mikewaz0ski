@@ -3,6 +3,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
   CommandInteraction,
+  EmbedBuilder,
   SlashCommandBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
@@ -11,6 +12,8 @@ import {
 import { z } from "zod";
 import { orderController } from "@/controller/oder-controller";
 import discordConfig from "@/config/discord-bot-config";
+import { embedTemplate } from "../utils/embedTemplate";
+import discordBot from "../discord-bot";
 
 export const data = new SlashCommandBuilder()
   .setName("order")
@@ -83,16 +86,25 @@ export async function execute(interaction: CommandInteraction) {
 
   // Create an action row to hold the button
   const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
-
   const requiredRoleIds = discordConfig.confirmOrder.roles;
   const existingRoleMentions = requiredRoleIds
     .filter((roleId) => interaction.guild?.roles.cache.has(roleId)) // Check if the guild has each role
     .map((roleId) => `<@&${roleId}>`) // Convert role IDs to mention format
     .join(" ");
-  await interaction.editReply({
-    content: `Order created successfully! Waiting for admin confirm order ${
+
+  const embed = embedTemplate({
+    bot: discordBot.user!,
+    title: "Order Created",
+    description: `Order created successfully! Waiting for admin to confirm order ${
       existingRoleMentions || ""
-    },`,
+    }`,
+    color: 0x4169e1,
+    thumbnail:
+      "https://i.pinimg.com/originals/da/fc/67/dafc6797cb0b603debbba9bfa26abfc1.gif",
+  });
+
+  await interaction.editReply({
+    embeds: [embed],
     components: [row],
   });
 }

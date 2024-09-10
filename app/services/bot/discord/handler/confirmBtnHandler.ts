@@ -6,11 +6,13 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ActionRowBuilder,
+  EmbedBuilder,
 } from "discord.js";
 import { Markup } from "telegraf";
 import telegramBot from "../../telegram-bot";
 import discordConfig from "@/config/discord-bot-config";
 import discordBot from "../discord-bot";
+import { embedTemplate } from "../utils/embedTemplate";
 
 export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
   await interaction.deferUpdate();
@@ -39,14 +41,6 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
         });
         if (dbOrder.type == "BrawlCoins") {
           const data = dbOrder.data as BrawlCoinsData;
-          const button = new ButtonBuilder()
-            .setCustomId(`confirm_order_id_${orderId}`)
-            .setDisabled(true)
-            .setLabel("Confirm")
-            .setStyle(ButtonStyle.Primary);
-          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            button
-          );
 
           const count = await prisma.order.count();
           const decryptedPassword = aes256cbc.decrypt(data.password);
@@ -91,18 +85,47 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
               inline_keyboard: inlineKeyboard.reply_markup.inline_keyboard, // Extract the inline_keyboard from the Markup object
             }
           );
+
+          const intrUser = interaction.user; // User who initiated the interaction
+          const bot = interaction.client.user;
+          const relpyEmbed = embedTemplate({
+            bot: discordBot.user!,
+            title: "Order Confirmed",
+            description: `Your order has been confirmed by an admin. Please check your direct messages for further details`,
+            color: 0x50c878,
+            thumbnail:
+              "https://media.discordapp.net/attachments/1172000543019892786/1283008798512123924/check.gif?ex=66e16e8e&is=66e01d0e&hm=5d90fd21d3e3c52deb71760d77980b934150cf5e6ca15c0754580f173083c07c&=&width=345&height=335",
+          });
+
+          const userEmbed = embedTemplate({
+            bot: discordBot.user!,
+            title: `Order ID ${orderId}`,
+            description: "Information about your order",
+            color: 0xffa500,
+            thumbnail:
+              "https://media.discordapp.net/attachments/1175068749188038707/1282913024495190057/Loading_Cute_GIF_-_Loading_Cute_Pastel_-_Discover__Share_GIFs.gif?ex=66e1155c&is=66dfc3dc&hm=bdcef88bfc900d529b68ca1fb459dae75cb7b26f127468cc3562ef162009825d&=",
+            fields: [
+              {
+                name: "Status",
+                value: "In Queue <:wait:1283067534571995176>",
+              },
+              {
+                name: "Message",
+                value:
+                  "- Orders are typically processed within **15-30 minutes**.\n- However, during **our nighttime (GMT+7 timezone)**, processing may take **6-8 hours**.\n**<a:mt_yayyy:1282967627685298176> We appreciate your patience and understanding. <a:mt_yayyy:1282967627685298176>**",
+              },
+            ],
+          });
           const user = await discordBot.users.fetch(
             dbOrder.Buyer.platformUserId
           );
           const [] = await Promise.all([
             interaction.message.edit({
-              components: [row],
-            }),
-            interaction.editReply({
-              content: `Your order has been confirmed by an admin. Please check your direct messages for further details.`,
+              embeds: [relpyEmbed],
+              components: [],
             }),
             user.send({
-              content: `**Order ID ${orderId}**\n**Status:** In Process\n**Message:**\n- Orders are typically processed within **15-30 minutes**.\n- However, during **our nighttime (GMT+7 timezone)**, processing may take **6-8 hours**.\nWe appreciate your patience and understanding.`,
+              embeds: [userEmbed],
             }),
           ]);
         }
