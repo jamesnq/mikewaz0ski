@@ -99,7 +99,7 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
               iconURL: bot.displayAvatarURL(), // Footer icon as bot's avatar
             })
             .setThumbnail(
-              "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXR3ZmVmN2dxdWttcHowNjFxNDd3dzQzeWkzaG00ZXVhOXFwdm9tZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/haRNyuaEHnBLtnplAk/giphy.webp"
+              "https://media.discordapp.net/attachments/1172000543019892786/1283008798512123924/check.gif?ex=66e16e8e&is=66e01d0e&hm=5d90fd21d3e3c52deb71760d77980b934150cf5e6ca15c0754580f173083c07c&=&width=345&height=335"
             );
           const user = await discordBot.users.fetch(
             dbOrder.Buyer.platformUserId
