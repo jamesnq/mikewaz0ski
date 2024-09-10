@@ -2,113 +2,180 @@ import { Context, Telegraf } from "telegraf";
 import prisma from "../db.server";
 import discordBot from "./discord/discord-bot";
 import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
-import { fileURLToPath } from "url";
+import {
+  ParseMode,
+  ReplyParameters,
+} from "node_modules/telegraf/typings/core/types/typegram";
+import { OrderStatus } from "@prisma/client";
 const telegramBot = new Telegraf(process.env.TELEGRAM_TOKEN);
 
 telegramBot.on("callback_query", async (ctx: Context) => {
   try {
     if (!ctx.callbackQuery || !("data" in ctx.callbackQuery)) return;
     const data = ctx.callbackQuery.data;
+
+    if (data.startsWith("take_order")) {
+      const orderId = data.split("|")[1];
+      const messageId = data.split("|")[2];
+      const telegramUserId = ctx.from!.id;
+      const telegramUsername = ctx.from!.username
+        ? `@${ctx.from!.username}`
+        : `tg://user?id=${telegramUserId}`;
+
+      ButtonHandle({
+        ctx: ctx,
+        orderId: orderId,
+        dcMsg: `**Order ID:** ${orderId}\n**Status:** In Process\n**Message:** You will be prompted for a verification code to log in. Please provide the code once you receive it.`,
+        replyMsg: `Đơn ${orderId}\n${telegramUsername} đã nhận đơn.`,
+        messageId: messageId,
+        statusBefore: "InQueue",
+        statusAfter: "InProcess",
+        press: true,
+      });
+    }
+
     if (data.startsWith("order_verify_code")) {
       const orderId = data.split("|")[1];
       const messageId = data.split("|")[2];
-      if (!orderId || !messageId)
-        return await ctx.answerCbQuery(
-          "Mã đơn hoặc mã tin nhắn không xác định"
-        );
-      const dbOrder = await prisma.order.findUnique({
-        where: { id: orderId },
-        include: { Buyer: true },
+      ButtonHandle({
+        ctx: ctx,
+        orderId: orderId,
+        dcMsg: `Please enter the verification code for your order (Order ID: ${orderId}).`,
+        btnCustomId: `open_order_verify_code`,
+        btnLabel: "Enter Verification Code",
+        messageId,
+        replyMsg: `Đơn ${orderId}:\nYêu cầu lấy code đã được gửi.`,
       });
-
-      if (!dbOrder) return await ctx.answerCbQuery("Không tìm thấy đơn!");
-      if (dbOrder.status !== "InProcess") {
-        return await ctx.answerCbQuery("Đơn không ở trạng thái xử lý!");
-      }
-      const user = await discordBot.users.fetch(dbOrder.Buyer.platformUserId);
-
-      const button = new ButtonBuilder()
-        .setCustomId(`open_order_verify_code|${dbOrder.id}|${messageId}`)
-        .setLabel("Enter Verification Code")
-        .setStyle(ButtonStyle.Primary);
-
-      const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
-      const message = await user.send({
-        content: `Please enter the verification code for your order (Order ID: ${orderId}).`,
-        components: [row],
-      });
-
-      if (message) {
-        await ctx.answerCbQuery(`Thông báo đã được gửi.`);
-      } else {
-        await ctx.answerCbQuery("Gửi thông báo không thành công!");
-      }
     }
 
     if (data.startsWith("notify_in")) {
       const orderId = data.split("|")[1];
-      if (!orderId) return await ctx.answerCbQuery("Mã đơn không  xác định");
-      const dbOrder = await prisma.order.findUnique({
-        where: { id: orderId },
-        include: { Buyer: true },
+      const messageId = data.split("|")[2];
+      ButtonHandle({
+        ctx: ctx,
+        orderId: orderId,
+        dcMsg: `We logged in, please be patient order is processing.`,
+        replyMsg: `Đơn ${orderId}:\nThông báo đã được gửi`,
+        messageId: messageId,
       });
-
-      if (!dbOrder) return await ctx.answerCbQuery("Không tìm thấy đơn");
-      if (dbOrder.status !== "InProcess") {
-        return await ctx.answerCbQuery("Đơn không ở trạng thái xử lý!");
-      }
-      const user = await discordBot.users.fetch(dbOrder.Buyer.platformUserId);
-
-      const message = await user.send({
-        content: `We has logged in, please be patient order is processing.`,
-      });
-
-      if (message) {
-        await ctx.answerCbQuery(`Thông báo đã được gửi.`);
-      } else {
-        await ctx.answerCbQuery("Gửi thông báo không thành công!");
-      }
     }
 
     if (data.startsWith("order_finish")) {
       const orderId = data.split("|")[1];
       const messageId = data.split("|")[2];
-      if (!orderId || !messageId) {
-        return await ctx.answerCbQuery(
-          "Mã đơn hoặc mã tin nhắn không xác định"
-        );
-      }
-      const dbOrder = await prisma.order.findUnique({
-        where: { id: orderId },
-        include: { Buyer: true },
+      ButtonHandle({
+        ctx: ctx,
+        orderId: orderId,
+        dcMsg: `Your order with order ID: ${orderId} has finished. Thanks for your purchase!`,
+        replyMsg: `Đơn ${orderId}:\nTrạng thái: Đã hoàn thành`,
+        messageId: messageId,
+        statusBefore: "InProcess",
+        statusAfter: "Completed",
       });
-      if (dbOrder!.status !== "InProcess") {
-        return await ctx.answerCbQuery("Đơn đã xử lý thành công");
-      }
-
-      const dbOrderUpdate = await prisma.order.update({
-        where: { id: orderId, status: "InProcess" },
-        data: { status: "Completed" },
-        include: { Buyer: true },
-      });
-      const user = await discordBot.users.fetch(
-        dbOrderUpdate.Buyer.platformUserId
-      );
-      // Send the file to the Discord user
-      const message = await user.send({
-        content: `Your order with order ID: ${orderId} has finished. Thanks for your purchase!`,
-      });
-
-      if (message) {
-        await ctx.reply(`Đã thông báo hoàn thành đơn ${orderId}.`);
-      } else {
-        await ctx.reply("Gửi thông báo lỗi.");
-      }
     }
   } catch (err) {
     ctx.reply("Lỗi khi ấn nút");
     console.error(err);
   }
 });
+
+async function ButtonHandle({
+  ctx,
+  orderId,
+  dcMsg,
+  btnCustomId,
+  btnLabel,
+  messageId,
+  replyMsg,
+  telegramUserName,
+  statusBefore,
+  statusAfter,
+  press,
+}: {
+  ctx: Context;
+  orderId: string;
+  dcMsg: string;
+  btnCustomId?: string;
+  btnLabel?: string;
+  messageId?: string;
+  replyMsg: string;
+  telegramUserName?: string;
+  statusBefore?: OrderStatus;
+  statusAfter?: OrderStatus;
+  press?: boolean;
+}) {
+  // Check orderId, messageId
+  if (!orderId || !messageId)
+    return await ctx.answerCbQuery("Mã đơn hoặc mã tin nhắn không xác định");
+  // Find order
+  const dbOrder = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { Buyer: true },
+  });
+
+  if (!dbOrder) return await ctx.answerCbQuery("Không tìm thấy đơn!");
+  // Button Logic
+  // Permit the "Take Order" button to be pressed when the order status is "InQueue"
+  // Restrict all other buttons from being pressed when the order status is "InQueue" or "Completed"
+  if (dbOrder.status === "Completed") {
+    return await ctx.answerCbQuery("Đơn đã được hoàn thành");
+  } else if (dbOrder.status === "InQueue" && press == undefined) {
+    return await ctx.answerCbQuery("Ấn nút nhận đơn trước");
+  }
+  // Update order status when finished
+  const dbOrderUpdate =
+    statusBefore && statusAfter
+      ? await prisma.order.update({
+          where: { id: orderId, status: statusBefore },
+          data: { status: statusAfter },
+          include: { Buyer: true },
+        })
+      : undefined;
+
+  // Discord Message
+  const user = await discordBot.users.fetch(
+    (dbOrderUpdate ? dbOrderUpdate : dbOrder).Buyer.platformUserId
+  );
+  const row =
+    btnCustomId && btnLabel
+      ? new ActionRowBuilder<ButtonBuilder>().addComponents(
+          new ButtonBuilder()
+            .setCustomId(`${btnCustomId}|${dbOrder.id}|${messageId}`)
+            .setLabel(btnLabel!)
+            .setStyle(ButtonStyle.Primary)
+        )
+      : undefined;
+
+  const dcMessageOption: {
+    content: string;
+    components?: ActionRowBuilder<ButtonBuilder>[];
+  } = {
+    content: dcMsg,
+  };
+
+  if (row) {
+    dcMessageOption.components = [row];
+  }
+  const message = await user.send(dcMessageOption);
+
+  const teleMessageOption: {
+    reply_parameters: ReplyParameters;
+    parse_mode?: ParseMode;
+  } = {
+    reply_parameters: {
+      message_id: Number(messageId),
+    },
+  };
+
+  if (telegramUserName) {
+    teleMessageOption.parse_mode = "MarkdownV2";
+  }
+
+  if (message) {
+    await ctx.sendMessage(replyMsg, teleMessageOption);
+  } else {
+    await ctx.answerCbQuery("Gửi thông báo không thành công!");
+  }
+}
 
 export default telegramBot;

@@ -53,6 +53,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: CommandInteraction) {
+  await interaction.deferReply();
   const selectedPackage: string = interaction.options
     .get("package")!
     .value?.toString()!;
@@ -88,10 +89,10 @@ export async function execute(interaction: CommandInteraction) {
     .filter((roleId) => interaction.guild?.roles.cache.has(roleId)) // Check if the guild has each role
     .map((roleId) => `<@&${roleId}>`) // Convert role IDs to mention format
     .join(" ");
-  await interaction.reply({
+  await interaction.editReply({
     content: `Order created successfully! Waiting for admin confirm order ${
       existingRoleMentions || ""
-    }`,
+    },`,
     components: [row],
   });
 }
