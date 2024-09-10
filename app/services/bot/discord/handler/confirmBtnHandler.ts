@@ -13,6 +13,7 @@ import discordConfig from "@/config/discord-bot-config";
 import discordBot from "../discord-bot";
 
 export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
+  await interaction.deferUpdate();
   try {
     if (interaction.customId?.startsWith("confirm_order_id_")) {
       const userId = interaction.member?.user.id || interaction.user.id;
@@ -22,11 +23,12 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
         !discordConfig.confirmOrder.users.includes(userId) &&
         !requiredRoleIds.some((roleId) => member?.roles.cache.has(roleId))
       ) {
-        return await interaction.reply({
+        return await interaction.editReply({
           content: "Confirm fail you don't have permission to confirm!",
           options: { ephemeral: true },
         });
       }
+
       // Extract the order ID from the custom ID
       const orderId = interaction.customId.split("confirm_order_id_")[1];
       try {
@@ -45,13 +47,6 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
           const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
             button
           );
-
-          const user = await discordBot.users.fetch(
-            dbOrder.Buyer.platformUserId
-          );
-          await user.send({
-            content: `**Order ID ${orderId}**\n**Status:** In Process\n**Message:**\n- Orders are typically processed within **15-30 minutes**.\n- However, during **our nighttime (GMT+7 timezone)**, processing may take **6-8 hours**.\nWe appreciate your patience and understanding.`,
-          });
 
           const count = await prisma.order.count();
           const decryptedPassword = aes256cbc.decrypt(data.password);
@@ -96,14 +91,18 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
               inline_keyboard: inlineKeyboard.reply_markup.inline_keyboard, // Extract the inline_keyboard from the Markup object
             }
           );
-
+          const user = await discordBot.users.fetch(
+            dbOrder.Buyer.platformUserId
+          );
           const [] = await Promise.all([
-            interaction.reply({
-              content: `Order id: ${dbOrder.id}\Confirm success`,
-              ephemeral: true,
-            }),
             interaction.message.edit({
               components: [row],
+            }),
+            interaction.editReply({
+              content: `Your order has been confirmed by an admin. Please check your direct messages for further details.`,
+            }),
+            user.send({
+              content: `**Order ID ${orderId}**\n**Status:** In Process\n**Message:**\n- Orders are typically processed within **15-30 minutes**.\n- However, during **our nighttime (GMT+7 timezone)**, processing may take **6-8 hours**.\nWe appreciate your patience and understanding.`,
             }),
           ]);
         }

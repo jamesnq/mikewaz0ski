@@ -114,10 +114,6 @@ async function ButtonHandle({
   });
 
   if (!dbOrder) return await ctx.answerCbQuery("Không tìm thấy đơn!");
-
-  console.log("🚀 ~ press:", press);
-  console.log("🚀 ~ dbOrder.status:", dbOrder.status);
-  console.log("🚀 ~ telegramUserName:", telegramUserName);
   // Button Logic
   // Permit the "Take Order" button to be pressed when the order status is "InQueue"
   // Restrict all other buttons from being pressed when the order status is "InQueue" or "Completed"
