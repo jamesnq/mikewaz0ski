@@ -10,6 +10,7 @@ import {
 import { Markup } from "telegraf";
 import telegramBot from "../../telegram-bot";
 import discordConfig from "@/config/discord-bot-config";
+import discordBot from "../discord-bot";
 
 export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
   try {
@@ -31,8 +32,8 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
       try {
         const dbOrder = await prisma.order.update({
           where: { id: orderId, status: "Pending" },
-          data: { status: "InProcess" },
-          select: { id: true, data: true, type: true },
+          data: { status: "InQueue" },
+          select: { id: true, data: true, type: true, Buyer: true },
         });
         if (dbOrder.type == "BrawlCoins") {
           const data = dbOrder.data as BrawlCoinsData;
@@ -44,37 +45,30 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
           const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
             button
           );
+
+          const user = await discordBot.users.fetch(
+            dbOrder.Buyer.platformUserId
+          );
+          await user.send({
+            content: `**Order ID ${orderId}**\n**Status:** In Process\n**Message:**\n- Orders are typically processed within **15-30 minutes**.\n- However, during **our nighttime (GMT+7 timezone)**, processing may take **6-8 hours**.\nWe appreciate your patience and understanding.`,
+          });
+
           const count = await prisma.order.count();
           const decryptedPassword = aes256cbc.decrypt(data.password);
           const messageText = `==========ĐƠN NẠP MỚI==========\n\nSTT: ${count}\nMã đơn: ${orderId}\nEmail: ${data.email}\nMật khẩu: ${decryptedPassword}\nGói: ${data.pack}\n`;
-          let inlineKeyboard = Markup.inlineKeyboard([
-            [
-              Markup.button.callback(
-                "Yêu cầu code",
-                `order_verify_code|${dbOrder.id}|MESSAGE_ID`
-              ),
-            ],
-            [
-              Markup.button.callback(
-                "Thông báo đã vào được",
-                `notify_in|${dbOrder.id}`
-              ),
-            ],
-            [
-              Markup.button.callback(
-                "Hoàn thành đơn",
-                `order_finish|${dbOrder.id}|MESSAGE_ID`
-              ),
-            ],
-          ]);
 
           const telegramResponse = await telegramBot.telegram.sendMessage(
             process.env.TELEGRAM_CHAT_ID,
-            messageText,
-            inlineKeyboard
+            messageText
           );
           const messageId = telegramResponse.message_id;
-          inlineKeyboard = Markup.inlineKeyboard([
+          const inlineKeyboard = Markup.inlineKeyboard([
+            [
+              Markup.button.callback(
+                "Nhận đơn",
+                `take_order|${dbOrder.id}|${messageId}`
+              ),
+            ],
             [
               Markup.button.callback(
                 "Yêu cầu code",
@@ -84,7 +78,7 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
             [
               Markup.button.callback(
                 "Thông báo đã vào được",
-                `notify_in|${dbOrder.id}`
+                `notify_in|${dbOrder.id}|${messageId}`
               ),
             ],
             [
@@ -105,7 +99,7 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
 
           const [] = await Promise.all([
             interaction.reply({
-              content: `Confirm success order id ${dbOrder.id}`,
+              content: `Order id: ${dbOrder.id}\Confirm success`,
               ephemeral: true,
             }),
             interaction.message.edit({
