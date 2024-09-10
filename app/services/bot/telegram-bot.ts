@@ -1,12 +1,18 @@
 import { Context, Telegraf } from "telegraf";
 import prisma from "../db.server";
 import discordBot from "./discord/discord-bot";
-import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
+import {
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder,
+  EmbedBuilder,
+} from "discord.js";
 import {
   ParseMode,
   ReplyParameters,
 } from "node_modules/telegraf/typings/core/types/typegram";
 import { OrderStatus } from "@prisma/client";
+import { embedTemplate } from "./discord/utils/embedTemplate";
 const telegramBot = new Telegraf(process.env.TELEGRAM_TOKEN);
 
 telegramBot.on("callback_query", async (ctx: Context) => {
@@ -25,7 +31,22 @@ telegramBot.on("callback_query", async (ctx: Context) => {
       ButtonHandle({
         ctx: ctx,
         orderId: orderId,
-        dcMsg: `**Order ID:** ${orderId}\n**Status:** In Process\n**Message:** You will be prompted for a verification code to log in. Please provide the code once you receive it.`,
+        embedTitle: `Order ID ${orderId}`,
+        embedDescription: `Information about your order`,
+        embedFields: [
+          {
+            name: "Status",
+            value: "Processing <a:loading:1283057731321991299>",
+          },
+          {
+            name: "Message",
+            value:
+              "- You will be prompted for a verification code to log in. Please provide the code by once you receive it.",
+          },
+        ],
+        embedThumbnails:
+          "https://cdn.discordapp.com/attachments/1176504635217936425/1283056364469489715/Loading_cat.gif?ex=66e19adb&is=66e0495b&hm=a39c751779340ee91c1abd3d73ab604989e0cd4d262da54e9496ebe989bf4120&",
+        embedColor: 0xffff00,
         replyMsg: `Đơn ${orderId}\n${telegramUsername} đã nhận đơn.`,
         messageId: messageId,
         statusBefore: "InQueue",
@@ -40,7 +61,22 @@ telegramBot.on("callback_query", async (ctx: Context) => {
       ButtonHandle({
         ctx: ctx,
         orderId: orderId,
-        dcMsg: `Please enter the verification code for your order (Order ID: ${orderId}).`,
+        embedTitle: `Order ID ${orderId}`,
+        embedDescription: `Information about your order`,
+        embedFields: [
+          {
+            name: "Status",
+            value: "Processing <a:loading:1283057731321991299>",
+          },
+          {
+            name: "Message",
+            value:
+              "- Please enter the verification code by **<a:down:1283065340141764710> pressing the button below <a:down:1283065340141764710>**",
+          },
+        ],
+        embedColor: 0xffff00,
+        embedThumbnails:
+          "https://cdn.discordapp.com/attachments/1176504635217936425/1283056364469489715/Loading_cat.gif?ex=66e19adb&is=66e0495b&hm=a39c751779340ee91c1abd3d73ab604989e0cd4d262da54e9496ebe989bf4120&",
         btnCustomId: `open_order_verify_code`,
         btnLabel: "Enter Verification Code",
         messageId,
@@ -54,8 +90,22 @@ telegramBot.on("callback_query", async (ctx: Context) => {
       ButtonHandle({
         ctx: ctx,
         orderId: orderId,
-        dcMsg: `We logged in, please be patient order is processing.`,
-        replyMsg: `Đơn ${orderId}:\nThông báo đã được gửi`,
+        embedTitle: `Order ID ${orderId}`,
+        embedDescription: `Information about your order`,
+        embedFields: [
+          {
+            name: "Status",
+            value: "Processing <a:loading:1283057731321991299>",
+          },
+          {
+            name: "Message",
+            value: "- We logged in, please be patient order is processing.",
+          },
+        ],
+        embedColor: 0x1e90ff,
+        embedThumbnails:
+          "https://cdn.discordapp.com/attachments/1176504635217936425/1283056364469489715/Loading_cat.gif?ex=66e19adb&is=66e0495b&hm=a39c751779340ee91c1abd3d73ab604989e0cd4d262da54e9496ebe989bf4120&",
+        replyMsg: `Đơn ${orderId}:\nThông báo đăng nhập đã được gửi`,
         messageId: messageId,
       });
     }
@@ -66,7 +116,22 @@ telegramBot.on("callback_query", async (ctx: Context) => {
       ButtonHandle({
         ctx: ctx,
         orderId: orderId,
-        dcMsg: `Your order with order ID: ${orderId} has finished. Thanks for your purchase!`,
+        embedTitle: `Order ID ${orderId}`,
+        embedDescription: `Information about your order`,
+        embedFields: [
+          {
+            name: "Status",
+            value: "Completed <a:check_gif:1175065179864698930>",
+          },
+          {
+            name: "Message",
+            value:
+              "- Your order has completed. Thanks for your purchase, please vouch for us! <a:mt_yayyy:1282967627685298176>",
+          },
+        ],
+        embedThumbnails:
+          "https://cdn.discordapp.com/attachments/1178944867536216124/1283075750702092443/mission-complete-spongebob.gif?ex=66e1ace9&is=66e05b69&hm=3a4e3f8360ddfe8a73105182fabfa884abd988e6332b02bacaa580c95bf69567&",
+        embedColor: 0x32cd32,
         replyMsg: `Đơn ${orderId}:\nTrạng thái: Đã hoàn thành`,
         messageId: messageId,
         statusBefore: "InProcess",
@@ -82,7 +147,6 @@ telegramBot.on("callback_query", async (ctx: Context) => {
 async function ButtonHandle({
   ctx,
   orderId,
-  dcMsg,
   btnCustomId,
   btnLabel,
   messageId,
@@ -91,10 +155,16 @@ async function ButtonHandle({
   statusBefore,
   statusAfter,
   press,
+  embedColor,
+  embedTitle,
+  embedDescription,
+  embedFields = [],
+  embedThumbnails,
+  embedImage,
+  embedUrl,
 }: {
   ctx: Context;
   orderId: string;
-  dcMsg: string;
   btnCustomId?: string;
   btnLabel?: string;
   messageId?: string;
@@ -103,6 +173,13 @@ async function ButtonHandle({
   statusBefore?: OrderStatus;
   statusAfter?: OrderStatus;
   press?: boolean;
+  embedColor?: number;
+  embedTitle?: string;
+  embedDescription?: string;
+  embedFields?: { name: string; value: string; inline?: boolean }[];
+  embedThumbnails?: string;
+  embedImage?: string;
+  embedUrl?: string;
 }) {
   // Check orderId, messageId
   if (!orderId || !messageId)
@@ -146,11 +223,23 @@ async function ButtonHandle({
         )
       : undefined;
 
+  const embed = embedTemplate({
+    bot: discordBot.user!,
+    color: embedColor!,
+    title: embedTitle!,
+    description: embedDescription!,
+  });
+  if (embedThumbnails) embed.setThumbnail(embedThumbnails);
+  if (embedImage) embed.setImage(embedImage);
+  if (embedFields) embed.setFields(embedFields);
+  if (embedThumbnails) embed.setThumbnail(embedThumbnails);
+  if (embedUrl) embed.setURL(embedUrl);
+
   const dcMessageOption: {
-    content: string;
+    embeds: EmbedBuilder[];
     components?: ActionRowBuilder<ButtonBuilder>[];
   } = {
-    content: dcMsg,
+    embeds: [embed],
   };
 
   if (row) {

@@ -12,6 +12,8 @@ import {
 import { z } from "zod";
 import { orderController } from "@/controller/oder-controller";
 import discordConfig from "@/config/discord-bot-config";
+import { embedTemplate } from "../utils/embedTemplate";
+import discordBot from "../discord-bot";
 
 export const data = new SlashCommandBuilder()
   .setName("order")
@@ -90,24 +92,16 @@ export async function execute(interaction: CommandInteraction) {
     .map((roleId) => `<@&${roleId}>`) // Convert role IDs to mention format
     .join(" ");
 
-  const user = interaction.user; // User who initiated the interaction
-  const bot = interaction.client.user;
-  const embed = new EmbedBuilder()
-    .setColor(0x4169e1) // Setting the color of the embed
-    .setTitle("Order Created")
-    .setDescription(
-      `Order created successfully! Waiting for admin to confirm order ${
-        existingRoleMentions || ""
-      }`
-    ) // Setting the description with the message
-    .setTimestamp() // Adding a timestamp
-    .setFooter({
-      text: bot.username, // Footer text as bot's name
-      iconURL: bot.displayAvatarURL(), // Footer icon as bot's avatar
-    })
-    .setThumbnail(
-      "https://i.pinimg.com/originals/da/fc/67/dafc6797cb0b603debbba9bfa26abfc1.gif"
-    );
+  const embed = embedTemplate({
+    bot: discordBot.user!,
+    title: "Order Created",
+    description: `Order created successfully! Waiting for admin to confirm order ${
+      existingRoleMentions || ""
+    }`,
+    color: 0x4169e1,
+    thumbnail:
+      "https://i.pinimg.com/originals/da/fc/67/dafc6797cb0b603debbba9bfa26abfc1.gif",
+  });
 
   await interaction.editReply({
     embeds: [embed],
