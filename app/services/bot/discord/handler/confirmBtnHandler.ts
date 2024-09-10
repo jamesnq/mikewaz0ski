@@ -6,6 +6,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ActionRowBuilder,
+  EmbedBuilder,
 } from "discord.js";
 import { Markup } from "telegraf";
 import telegramBot from "../../telegram-bot";
@@ -39,14 +40,6 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
         });
         if (dbOrder.type == "BrawlCoins") {
           const data = dbOrder.data as BrawlCoinsData;
-          const button = new ButtonBuilder()
-            .setCustomId(`confirm_order_id_${orderId}`)
-            .setDisabled(true)
-            .setLabel("Confirm")
-            .setStyle(ButtonStyle.Primary);
-          const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            button
-          );
 
           const count = await prisma.order.count();
           const decryptedPassword = aes256cbc.decrypt(data.password);
@@ -91,16 +84,35 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
               inline_keyboard: inlineKeyboard.reply_markup.inline_keyboard, // Extract the inline_keyboard from the Markup object
             }
           );
+
+          const intrUser = interaction.user; // User who initiated the interaction
+          const bot = interaction.client.user;
+          const embed = new EmbedBuilder()
+            .setColor(0x50c878) // Setting the color of the embed
+            .setTitle("Order Confirmed")
+            .setDescription(
+              `Your order has been confirmed by an admin. Please check your direct messages for further details`
+            ) // Setting the description with the message
+            .setTimestamp() // Adding a timestamp
+            .setFooter({
+              text: bot.username, // Footer text as bot's name
+              iconURL: bot.displayAvatarURL(), // Footer icon as bot's avatar
+            })
+            .setThumbnail(
+              "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXR3ZmVmN2dxdWttcHowNjFxNDd3dzQzeWkzaG00ZXVhOXFwdm9tZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/haRNyuaEHnBLtnplAk/giphy.webp"
+            );
           const user = await discordBot.users.fetch(
             dbOrder.Buyer.platformUserId
           );
           const [] = await Promise.all([
             interaction.message.edit({
-              components: [row],
+              embeds: [embed],
+              components: [],
             }),
-            interaction.editReply({
-              content: `Your order has been confirmed by an admin. Please check your direct messages for further details.`,
-            }),
+            // interaction.editReply({
+            //   embeds: [embed],
+            //   components: [],
+            // }),
             user.send({
               content: `**Order ID ${orderId}**\n**Status:** In Process\n**Message:**\n- Orders are typically processed within **15-30 minutes**.\n- However, during **our nighttime (GMT+7 timezone)**, processing may take **6-8 hours**.\nWe appreciate your patience and understanding.`,
             }),
