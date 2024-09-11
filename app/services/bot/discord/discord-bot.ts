@@ -3,6 +3,7 @@ import {
   Client,
   Events,
   GatewayIntentBits,
+  MessageCollector,
   ModalSubmitInteraction,
   StringSelectMenuInteraction,
 } from "discord.js";
@@ -11,6 +12,7 @@ import { ConfirmButtonHandler } from "./handler/confirmBtnHandler";
 import { SendCodeButtonHandler } from "./handler/sendCodeBtnHandler";
 import { SendCodeModalSubmit } from "./handler/sendCodeModalSubmit";
 import { deployCommands } from "./deploy-commands";
+import { ChatGPTService } from "../chatgpt/chatgpt-service";
 
 const discordBot = new Client({
   intents: [
@@ -66,6 +68,92 @@ discordBot.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.isModalSubmit()) {
     if (interaction.customId?.includes("verification-code-modal")) {
       SendCodeModalSubmit(interaction as unknown as ModalSubmitInteraction);
+    }
+  }
+});
+
+interface Session {
+  collector: MessageCollector;
+  chatGPTService: ChatGPTService;
+}
+
+const activeSessions = new Map<string, Session[]>();
+
+discordBot.on(Events.ChannelCreate, async (channel) => {
+  if (channel.isTextBased() && !channel.isDMBased()) {
+    const chatGPTService = new ChatGPTService();
+
+    await channel.send(`Welcome! How can I assist you today?`);
+
+    const collector = channel.createMessageCollector({ time: 3600000 });
+
+    const newSession: Session = { collector, chatGPTService };
+
+    // Add the new session to the channel's session array
+    if (!activeSessions.has(channel.id)) {
+      activeSessions.set(channel.id, []);
+    }
+    activeSessions.get(channel.id)!.push(newSession);
+
+    collector.on("collect", async (message) => {
+      if (message.author.bot) return;
+
+      try {
+        const response = await chatGPTService.processMessage(message.content);
+        if (response === "IRRELEVANT") {
+          collector.stop("irrelevant");
+        } else {
+          await channel.send(response);
+        }
+      } catch (error) {
+        console.error("Error processing message with ChatGPT:", error);
+        await channel.send(
+          "I apologize, but I encountered an error while processing your request. Please try again later."
+        );
+      }
+    });
+
+    collector.on("end", (collected, reason) => {
+      if (reason === "irrelevant") {
+        channel.send(
+          "This support session has ended due to an irrelevant query. If you need further assistance, please open a new ticket."
+        );
+      } else {
+        channel.send(
+          "This support session has ended. If you need further assistance, please open a new ticket."
+        );
+      }
+      // Remove this specific session from the channel's session array
+      const sessions = activeSessions.get(channel.id);
+      if (sessions) {
+        const index = sessions.findIndex(
+          (session) => session.collector === collector
+        );
+        if (index !== -1) {
+          sessions.splice(index, 1);
+          if (sessions.length === 0) {
+            activeSessions.delete(channel.id);
+          }
+        }
+      }
+    });
+  }
+});
+
+// Handle channel delete event
+discordBot.on(Events.ChannelDelete, (channel) => {
+  if (channel.isTextBased() && !channel.isDMBased()) {
+    const sessions = activeSessions.get(channel.id);
+    if (sessions) {
+      sessions.forEach((session) => {
+        session.collector.stop("channelDeleted");
+        // Clean up the ChatGPT service if necessary
+        // session.chatGPTService.cleanup();  // Implement this method if needed
+      });
+      activeSessions.delete(channel.id);
+      console.log(
+        `Cleaned up ${sessions.length} session(s) for deleted channel ${channel.id}`
+      );
     }
   }
 });

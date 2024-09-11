@@ -16,4 +16,6 @@ export const envVariables = z.object({
   /**For encrypt key or private stuff */
   AES256CBC_KEY: z.string().length(32),
   AES256CBC_IV: z.string().length(16),
+
+  CHATGPT_TOKEN: z.string(),
 });
