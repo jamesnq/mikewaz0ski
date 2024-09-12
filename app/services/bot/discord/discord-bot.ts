@@ -80,7 +80,11 @@ interface Session {
 const activeSessions = new Map<string, Session[]>();
 
 discordBot.on(Events.ChannelCreate, async (channel) => {
-  if (channel.isTextBased() && !channel.isDMBased()) {
+  if (
+    channel.isTextBased() &&
+    !channel.isDMBased() &&
+    channel.parent?.id === "1280084562055270450"
+  ) {
     const chatGPTService = new ChatGPTService();
 
     await channel.send(`Welcome! How can I assist you today?`);

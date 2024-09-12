@@ -29,7 +29,7 @@ export const embedTemplate = ({
 }: {
   bot: ClientUser;
   title: string;
-  description: string;
+  description?: string;
   color: number;
   fields?: { name: string; value: string; inline?: boolean }[];
   thumbnail?: string;
@@ -38,7 +38,6 @@ export const embedTemplate = ({
 }): EmbedBuilder => {
   const embed = new EmbedBuilder()
     .setTitle(title)
-    .setDescription(description)
     .setColor(color)
     .setFooter({
       text: bot.username, // Footer text as bot's name
@@ -50,6 +49,6 @@ export const embedTemplate = ({
   if (thumbnail) embed.setThumbnail(thumbnail);
   if (image) embed.setImage(image);
   if (url) embed.setURL(url);
-
+  if (description) embed.setDescription(description);
   return embed;
 };
