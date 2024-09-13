@@ -1,18 +1,10 @@
-import { BrawlCoinsData } from "@/lib/zod-schema";
-import aes256cbc from "@/server/aes-265-cbc";
-import prisma from "@/services/db.server";
 import {
   ButtonInteraction,
-  ButtonBuilder,
-  ButtonStyle,
   ActionRowBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  AnyComponentBuilder,
 } from "discord.js";
-import { Markup } from "telegraf";
-import telegramBot from "../../telegram-bot";
 
 export async function SendCodeButtonHandler(interaction: ButtonInteraction) {
   const btnId = interaction.customId;

@@ -16,6 +16,12 @@ export const data = new SlashCommandBuilder()
   )
   .addStringOption((option) =>
     option
+      .setName("description")
+      .setDescription("Embed description")
+      .setRequired(true)
+  )
+  .addStringOption((option) =>
+    option
       .setName("color")
       .setDescription("Embed color (hex)")
       .setRequired(true)
@@ -92,10 +98,6 @@ export async function execute(interaction: CommandInteraction) {
     } else {
       break; // Stop if we encounter an empty field
     }
-  }
-
-  if (fields.length === 0) {
-    return interaction.editReply("Error: At least one field is required.");
   }
 
   const embed = embedTemplate({

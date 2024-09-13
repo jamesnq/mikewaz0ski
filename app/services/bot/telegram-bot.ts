@@ -84,6 +84,35 @@ telegramBot.on("callback_query", async (ctx: Context) => {
       });
     }
 
+    if (data.startsWith("wrong_password")) {
+      const orderId = data.split("|")[1];
+      const messageId = data.split("|")[2];
+      ButtonHandle({
+        ctx: ctx,
+        orderId: orderId,
+        embedTitle: `Order ID ${orderId}`,
+        embedDescription: `Information about your order`,
+        embedFields: [
+          {
+            name: "Status",
+            value: "Processing <a:loading:1283057731321991299>",
+          },
+          {
+            name: "Message",
+            value:
+              "- Your email or password is wrong, please send again by **<a:down:1283065340141764710> pressing the button below <a:down:1283065340141764710>**",
+          },
+        ],
+        embedColor: 0xff0000,
+        embedThumbnails:
+          "https://cdn.discordapp.com/attachments/1176504635217936425/1283056364469489715/Loading_cat.gif?ex=66e19adb&is=66e0495b&hm=a39c751779340ee91c1abd3d73ab604989e0cd4d262da54e9496ebe989bf4120&",
+        btnCustomId: `open_resend_appleID`,
+        btnLabel: "Send Again Apple ID",
+        messageId,
+        replyMsg: `Đơn ${orderId}:\nĐã yêu cầu gửi lại nick.`,
+      });
+    }
+
     if (data.startsWith("notify_in")) {
       const orderId = data.split("|")[1];
       const messageId = data.split("|")[2];

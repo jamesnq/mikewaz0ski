@@ -17,5 +17,5 @@ export const envVariables = z.object({
   AES256CBC_KEY: z.string().length(32),
   AES256CBC_IV: z.string().length(16),
 
-  CHATGPT_TOKEN: z.string(),
+  // CHATGPT_TOKEN: z.string(),
 });
