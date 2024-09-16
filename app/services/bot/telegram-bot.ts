@@ -291,6 +291,7 @@ async function ButtonHandle({
 
   if (message) {
     await ctx.sendMessage(replyMsg, teleMessageOption);
+    await ctx.answerCbQuery("Thao tác thành công!");
   } else {
     await ctx.answerCbQuery("Gửi thông báo không thành công!");
   }
