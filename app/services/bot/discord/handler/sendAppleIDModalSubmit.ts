@@ -31,5 +31,5 @@ export async function SendAppleIDModalSubmit(
       },
     }
   );
-  return await interaction.reply(`Your verfication code has been sent!`);
+  return await interaction.reply(`Your login credential has been sent!`);
 }
