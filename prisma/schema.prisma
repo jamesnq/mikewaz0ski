@@ -25,6 +25,7 @@ model Buyer {
   platformUserId String
   username       String?
   Orders         Order[]
+  balance        Float         @default(0)
 
   @@unique([platform, platformUserId])
 }

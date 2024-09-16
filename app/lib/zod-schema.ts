@@ -44,3 +44,8 @@ export const CreateOrderSchema = z
 export const OrderConfirmRequest = z.object({
   orderId: z.string(),
 });
+
+export const GetBalance = z.object({
+  platform: z.nativeEnum($Enums.BuyerPlatform),
+  platformUserId: z.string(),
+});
