@@ -66,6 +66,12 @@ export async function ConfirmButtonHandler(interaction: ButtonInteraction) {
             ],
             [
               Markup.button.callback(
+                "Sai mật khẩu",
+                `wrong_password|${dbOrder.id}|${messageId}`
+              ),
+            ],
+            [
+              Markup.button.callback(
                 "Thông báo đã vào được",
                 `notify_in|${dbOrder.id}|${messageId}`
               ),
