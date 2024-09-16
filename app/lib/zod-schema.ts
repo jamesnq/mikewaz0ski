@@ -49,3 +49,9 @@ export const GetBalance = z.object({
   platform: z.nativeEnum($Enums.BuyerPlatform),
   platformUserId: z.string(),
 });
+
+export const AddBalance = z.object({
+  platform: z.nativeEnum($Enums.BuyerPlatform),
+  platformUserId: z.string(),
+  amount: z.number(),
+});
