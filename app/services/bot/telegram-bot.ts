@@ -106,7 +106,7 @@ telegramBot.on("callback_query", async (ctx: Context) => {
         embedColor: 0xff0000,
         embedThumbnails:
           "https://cdn.discordapp.com/attachments/1176504635217936425/1283056364469489715/Loading_cat.gif?ex=66e19adb&is=66e0495b&hm=a39c751779340ee91c1abd3d73ab604989e0cd4d262da54e9496ebe989bf4120&",
-        btnCustomId: `open_resend_appleID`,
+        btnCustomId: `open_resend_appleid`,
         btnLabel: "Send Again Apple ID",
         messageId,
         replyMsg: `Đơn ${orderId}:\nĐã yêu cầu gửi lại nick.`,

@@ -63,7 +63,7 @@ discordBot.on(Events.InteractionCreate, async (interaction) => {
       SendCodeButtonHandler(interaction as unknown as ButtonInteraction);
     }
 
-    if (interaction.customId?.startsWith("open_resend_appleID")) {
+    if (interaction.customId?.startsWith("open_resend_appleid")) {
       SendAppleIDButtonHandler(interaction as unknown as ButtonInteraction);
     }
   }
@@ -73,7 +73,7 @@ discordBot.on(Events.InteractionCreate, async (interaction) => {
       SendCodeModalSubmit(interaction as unknown as ModalSubmitInteraction);
     }
 
-    if (interaction.customId?.includes("vsend-appleid-modal")) {
+    if (interaction.customId?.includes("send-appleid-modal")) {
       SendAppleIDModalSubmit(interaction as unknown as ModalSubmitInteraction);
     }
   }

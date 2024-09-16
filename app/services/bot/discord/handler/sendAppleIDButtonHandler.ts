@@ -14,25 +14,26 @@ export async function SendAppleIDButtonHandler(interaction: ButtonInteraction) {
     .setCustomId(`send-appleid-modal|${messageId}|${orderId}`)
     .setTitle("Send Again Apple ID");
 
-  const email = new TextInputBuilder()
+  const emailField = new TextInputBuilder()
     .setCustomId(`email`)
     // The label is the prompt the user sees for this input
     .setLabel("Enter Apple ID email")
     // Short means only a single line of text
     .setStyle(TextInputStyle.Short);
 
-  const password = new TextInputBuilder()
+  const passwordField = new TextInputBuilder()
     .setCustomId(`password`)
     // The label is the prompt the user sees for this input
     .setLabel("Enter Apple ID password")
     // Short means only a single line of text
     .setStyle(TextInputStyle.Short);
   const firstActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(
-    email,
-    password
+    emailField
   );
+  const secondActionRow =
+    new ActionRowBuilder<TextInputBuilder>().addComponents(passwordField);
 
-  modal.addComponents(firstActionRow);
+  modal.addComponents(firstActionRow, secondActionRow);
 
   return await interaction.showModal(modal);
 }
