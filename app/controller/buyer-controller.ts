@@ -1,5 +1,6 @@
 import { AddBalance, GetBalance } from "@/lib/zod-schema";
 import prisma from "@/services/db.server";
+import { BuyerPlatform } from "@prisma/client";
 import { z } from "zod";
 
 class BuyerController {
@@ -116,6 +117,23 @@ class BuyerController {
         error: `Failed to fetch leaderboard: ${(error as Error).message}`,
       };
     }
+  }
+
+  async createBuyerIfNotExists(
+    userId: string,
+    platform: BuyerPlatform
+  ): Promise<void> {
+    await prisma.buyer.upsert({
+      where: {
+        platform_platformUserId: { platform: platform, platformUserId: userId },
+      },
+      update: {}, // If the user already exists, don't update anything
+      create: {
+        platformUserId: userId,
+        platform: platform,
+        // balance will default to 0 as per your schema
+      },
+    });
   }
 }
 

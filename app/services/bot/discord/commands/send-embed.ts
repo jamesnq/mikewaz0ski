@@ -1,5 +1,6 @@
 import {
   ChannelType,
+  ChatInputCommandInteraction,
   CommandInteraction,
   PermissionFlagsBits,
   SlashCommandBuilder,
@@ -58,7 +59,7 @@ for (let i = 0; i < 5; i++) {
   );
 }
 
-export async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction) {
   await interaction.deferReply({ ephemeral: true });
   if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageMessages)) {
     return interaction.editReply(

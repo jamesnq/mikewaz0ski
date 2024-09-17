@@ -1,8 +1,10 @@
 import {
   ButtonInteraction,
+  ChatInputCommandInteraction,
   Client,
   Events,
   GatewayIntentBits,
+  Interaction,
   ModalSubmitInteraction,
 } from "discord.js";
 import { commands } from "./commands";
@@ -12,6 +14,7 @@ import { SendCodeModalSubmit } from "./handler/sendCodeModalSubmit";
 import { deployCommands } from "./deploy-commands";
 import { SendAppleIDButtonHandler } from "./handler/sendAppleIDButtonHandler";
 import { SendAppleIDModalSubmit } from "./handler/sendAppleIDModalSubmit";
+import { buyerController } from "@/controller/buyer-controller";
 
 const discordBot = new Client({
   intents: [
@@ -32,7 +35,7 @@ discordBot.on("guildCreate", async () => {
 });
 
 // Interaction event listener for handling commands
-discordBot.on("interactionCreate", async (interaction) => {
+discordBot.on("interactionCreate", async (interaction: Interaction) => {
   if (!interaction.isCommand()) return;
 
   const { commandName } = interaction;
@@ -44,7 +47,13 @@ discordBot.on("interactionCreate", async (interaction) => {
 
   try {
     if (commands[commandName as keyof typeof commands]) {
-      commands[commandName as keyof typeof commands].execute(interaction);
+      if (interaction.isChatInputCommand()) {
+        commands[commandName as keyof typeof commands].execute(interaction);
+      } else {
+        console.error(
+          `Unsupported interaction type for command: ${commandName}`
+        );
+      }
     }
   } catch (error) {
     console.error("Error executing command:", error);
@@ -77,6 +86,14 @@ discordBot.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.customId?.includes("send-appleid-modal")) {
       SendAppleIDModalSubmit(interaction as unknown as ModalSubmitInteraction);
     }
+  }
+});
+
+discordBot.on(Events.GuildMemberAdd, async (member) => {
+  try {
+    await buyerController.createBuyerIfNotExists(member.user.id, "Discord");
+  } catch (error) {
+    console.error(`Error creating buyer for user: ${(error as Error).message}`);
   }
 });
 

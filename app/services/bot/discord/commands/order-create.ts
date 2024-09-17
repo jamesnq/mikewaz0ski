@@ -2,6 +2,7 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChatInputCommandInteraction,
   CommandInteraction,
   EmbedBuilder,
   SlashCommandBuilder,
@@ -55,7 +56,7 @@ export const data = new SlashCommandBuilder()
       .setRequired(true)
   );
 
-export async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction) {
   await interaction.deferReply();
   const selectedPackage: string = interaction.options
     .get("package")!
