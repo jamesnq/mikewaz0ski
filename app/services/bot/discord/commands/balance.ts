@@ -1,9 +1,6 @@
 import { buyerController } from "@/controller/buyer-controller";
-import {
-  ChatInputCommandInteraction,
-  CommandInteraction,
-  SlashCommandBuilder,
-} from "discord.js";
+import discordConfig from "@/config/discord-bot-config";
+import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 
 export const data = new SlashCommandBuilder()
   .setName("balance")
@@ -20,6 +17,9 @@ export const data = new SlashCommandBuilder()
           .setName("amount")
           .setDescription("Amount to add")
           .setRequired(true)
+      )
+      .addUserOption((option) =>
+        option.setName("user").setDescription("User to add balance to")
       )
   )
   .addSubcommand((subcommand) =>
@@ -43,7 +43,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
   await interaction.deferReply({ ephemeral: true });
   const subcommand = interaction.options.getSubcommand();
-  console.log("🚀 ~ execute ~ subcommand:", subcommand);
+
   switch (subcommand) {
     case "get":
       try {
@@ -65,12 +65,71 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         });
       }
     case "add":
-      return interaction.editReply({
-        content: `Add command`,
-      });
+      try {
+        const isAdmin = discordConfig.confirmOrder.users.includes(
+          interaction.user.id
+        );
+
+        if (!isAdmin) {
+          return interaction.editReply({
+            content: "You don't have permission to use this command.",
+          });
+        }
+
+        const amount = parseInt(interaction.options.getString("amount", true));
+        const targetUser =
+          interaction.options.getUser("user") || interaction.user;
+
+        await buyerController.addBalance({
+          platformUserId: targetUser.id,
+          platform: "Discord",
+          amount,
+        });
+
+        return interaction.editReply({
+          content: `Successfully added ${amount} ${
+            amount > 1 ? "tokens" : "token"
+          } to ${
+            targetUser.id === interaction.user.id
+              ? "your"
+              : targetUser.username + "'s"
+          } balance.`,
+        });
+      } catch (err) {
+        console.error(`Error adding balance: ${(err as Error).message}`);
+        return interaction.editReply({
+          content: "Error adding balance",
+        });
+      }
     case "send":
-      return interaction.editReply({
-        content: `send command`,
-      });
+      try {
+        const amount = parseInt(interaction.options.getString("amount", true));
+        const recipientId = interaction.options.getString("user", true);
+
+        // Deduct from sender
+        await buyerController.addBalance({
+          platformUserId: interaction.user.id,
+          platform: "Discord",
+          amount: -amount,
+        });
+
+        // Add to recipient
+        await buyerController.addBalance({
+          platformUserId: recipientId,
+          platform: "Discord",
+          amount,
+        });
+
+        return interaction.editReply({
+          content: `<@${interaction.user.id}> successfully sent ${amount} ${
+            amount > 1 ? "tokens" : "token"
+          } to <@${recipientId}>.`,
+        });
+      } catch (err) {
+        console.error(`Error sending balance: ${(err as Error).message}`);
+        return interaction.editReply({
+          content: "Error sending balance",
+        });
+      }
   }
 }
