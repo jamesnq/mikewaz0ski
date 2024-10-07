@@ -2,6 +2,7 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChatInputCommandInteraction,
   CommandInteraction,
   EmbedBuilder,
   SlashCommandBuilder,
@@ -55,7 +56,7 @@ export const data = new SlashCommandBuilder()
       .setRequired(true)
   );
 
-export async function execute(interaction: CommandInteraction) {
+export async function execute(interaction: ChatInputCommandInteraction) {
   await interaction.deferReply();
   const selectedPackage: string = interaction.options
     .get("package")!
@@ -84,8 +85,16 @@ export async function execute(interaction: CommandInteraction) {
     .setLabel("Confirm")
     .setStyle(ButtonStyle.Primary);
 
+  const cancel = new ButtonBuilder()
+    .setCustomId(`cancel_order_id_${order.id}`) // Custom ID to handle the button interaction
+    .setLabel("Cancel")
+    .setStyle(ButtonStyle.Secondary);
+
   // Create an action row to hold the button
-  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    button,
+    cancel
+  );
   const requiredRoleIds = discordConfig.confirmOrder.roles;
   const existingRoleMentions = requiredRoleIds
     .filter((roleId) => interaction.guild?.roles.cache.has(roleId)) // Check if the guild has each role
@@ -104,6 +113,7 @@ export async function execute(interaction: CommandInteraction) {
   });
 
   await interaction.editReply({
+    content: existingRoleMentions || "",
     embeds: [embed],
     components: [row],
   });

@@ -1,8 +1,10 @@
 import {
   ButtonInteraction,
+  ChatInputCommandInteraction,
   Client,
   Events,
   GatewayIntentBits,
+  Interaction,
   ModalSubmitInteraction,
 } from "discord.js";
 import { commands } from "./commands";
@@ -12,6 +14,8 @@ import { SendCodeModalSubmit } from "./handler/sendCodeModalSubmit";
 import { deployCommands } from "./deploy-commands";
 import { SendAppleIDButtonHandler } from "./handler/sendAppleIDButtonHandler";
 import { SendAppleIDModalSubmit } from "./handler/sendAppleIDModalSubmit";
+import { buyerController } from "@/controller/buyer-controller";
+import { CancelButtonHandler } from "./handler/cancelBtn";
 
 const discordBot = new Client({
   intents: [
@@ -19,6 +23,7 @@ const discordBot = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.DirectMessages,
+    GatewayIntentBits.GuildMembers,
   ],
 });
 
@@ -31,7 +36,7 @@ discordBot.on("guildCreate", async () => {
 });
 
 // Interaction event listener for handling commands
-discordBot.on("interactionCreate", async (interaction) => {
+discordBot.on("interactionCreate", async (interaction: Interaction) => {
   if (!interaction.isCommand()) return;
 
   const { commandName } = interaction;
@@ -43,7 +48,13 @@ discordBot.on("interactionCreate", async (interaction) => {
 
   try {
     if (commands[commandName as keyof typeof commands]) {
-      commands[commandName as keyof typeof commands].execute(interaction);
+      if (interaction.isChatInputCommand()) {
+        commands[commandName as keyof typeof commands].execute(interaction);
+      } else {
+        console.error(
+          `Unsupported interaction type for command: ${commandName}`
+        );
+      }
     }
   } catch (error) {
     console.error("Error executing command:", error);
@@ -59,6 +70,11 @@ discordBot.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.customId?.startsWith("confirm_order_id_")) {
       ConfirmButtonHandler(interaction as unknown as ButtonInteraction);
     }
+
+    if (interaction.customId?.startsWith("cancel_order_id_")) {
+      CancelButtonHandler(interaction as unknown as ButtonInteraction);
+    }
+
     if (interaction.customId?.startsWith("open_order_verify_code")) {
       SendCodeButtonHandler(interaction as unknown as ButtonInteraction);
     }
