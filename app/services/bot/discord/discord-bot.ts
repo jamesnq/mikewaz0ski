@@ -15,6 +15,7 @@ import { deployCommands } from "./deploy-commands";
 import { SendAppleIDButtonHandler } from "./handler/sendAppleIDButtonHandler";
 import { SendAppleIDModalSubmit } from "./handler/sendAppleIDModalSubmit";
 import { buyerController } from "@/controller/buyer-controller";
+import { CancelButtonHandler } from "./handler/cancelBtn";
 
 const discordBot = new Client({
   intents: [
@@ -69,6 +70,11 @@ discordBot.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.customId?.startsWith("confirm_order_id_")) {
       ConfirmButtonHandler(interaction as unknown as ButtonInteraction);
     }
+
+    if (interaction.customId?.startsWith("cancel_order_id_")) {
+      CancelButtonHandler(interaction as unknown as ButtonInteraction);
+    }
+
     if (interaction.customId?.startsWith("open_order_verify_code")) {
       SendCodeButtonHandler(interaction as unknown as ButtonInteraction);
     }
@@ -86,14 +92,6 @@ discordBot.on(Events.InteractionCreate, async (interaction) => {
     if (interaction.customId?.includes("send-appleid-modal")) {
       SendAppleIDModalSubmit(interaction as unknown as ModalSubmitInteraction);
     }
-  }
-});
-
-discordBot.on(Events.GuildMemberAdd, async (member) => {
-  try {
-    await buyerController.createBuyerIfNotExists(member.user.id, "Discord");
-  } catch (error) {
-    console.error(`Error creating buyer for user: ${(error as Error).message}`);
   }
 });
 
