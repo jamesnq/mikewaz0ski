@@ -25,9 +25,35 @@ model Buyer {
   platformUserId String
   username       String?
   Orders         Order[]
-  balance        Float         @default(0)
+  Wallet         Wallet?       @relation(fields: [walletId], references: [id])
+  walletId       String?       @db.ObjectId
 
   @@unique([platform, platformUserId])
+}
+
+enum TransactionType {
+  Deposit
+  W2W // Wallet to Wallet
+}
+
+model TransactionHistory {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  amount          Float
+  type            TransactionType
+  createdAt       DateTime        @default(now())
+  sendWallet      Wallet          @relation("sendWallet", fields: [sendWalletId], references: [id])
+  sendWalletId    String          @db.ObjectId
+  receiveWallet   Wallet          @relation("receiveWallet", fields: [receiveWalletId], references: [id])
+  receiveWalletId String          @db.ObjectId
+}
+
+model Wallet {
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  balance Float   @default(0)
+  Buyers  Buyer[]
+
+  sendWallet    TransactionHistory[] @relation("sendWallet")
+  receiveWallet TransactionHistory[] @relation("receiveWallet")
 }
 
 enum OrderStatus {

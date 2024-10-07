@@ -1,12 +1,23 @@
 import { buyerController } from "@/controller/buyer-controller";
 import discordConfig from "@/config/discord-bot-config";
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  SlashCommandBuilder,
+  TextChannel,
+} from "discord.js";
 
 export const data = new SlashCommandBuilder()
   .setName("balance")
   .setDescription("Balance command.")
   .addSubcommand((subcommand) =>
-    subcommand.setName("get").setDescription("Get your balance.")
+    subcommand
+      .setName("get")
+      .setDescription("Get your balance.")
+      .addUserOption((option) =>
+        option
+          .setName("user")
+          .setDescription("User to get balance for (optional)")
+      )
   )
   .addSubcommand((subcommand) =>
     subcommand
@@ -47,14 +58,18 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   switch (subcommand) {
     case "get":
       try {
+        const targetUser =
+          interaction.options.getUser("user") || interaction.user;
         const balance = await buyerController.getBalance({
-          platformUserId: interaction.user.id,
+          platformUserId: targetUser.id,
           platform: "Discord",
         });
         return interaction.editReply({
-          content: `You have ${balance.balance} ${
-            balance.balance > 1 ? "tokens" : "token"
-          }`,
+          content: `${
+            targetUser.id === interaction.user.id
+              ? "You have"
+              : `${targetUser.username} has`
+          } ${balance.balance} ${balance.balance > 1 ? "tokens" : "token"}`,
         });
       } catch (err) {
         console.error(
@@ -65,71 +80,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         });
       }
     case "add":
-      try {
-        const isAdmin = discordConfig.confirmOrder.users.includes(
-          interaction.user.id
-        );
-
-        if (!isAdmin) {
-          return interaction.editReply({
-            content: "You don't have permission to use this command.",
-          });
-        }
-
-        const amount = parseInt(interaction.options.getString("amount", true));
-        const targetUser =
-          interaction.options.getUser("user") || interaction.user;
-
-        await buyerController.addBalance({
-          platformUserId: targetUser.id,
-          platform: "Discord",
-          amount,
-        });
-
-        return interaction.editReply({
-          content: `Successfully added ${amount} ${
-            amount > 1 ? "tokens" : "token"
-          } to ${
-            targetUser.id === interaction.user.id
-              ? "your"
-              : targetUser.username + "'s"
-          } balance.`,
-        });
-      } catch (err) {
-        console.error(`Error adding balance: ${(err as Error).message}`);
-        return interaction.editReply({
-          content: "Error adding balance",
-        });
-      }
+      return interaction.editReply({
+        content: `add`,
+      });
     case "send":
-      try {
-        const amount = parseInt(interaction.options.getString("amount", true));
-        const recipientId = interaction.options.getString("user", true);
-
-        // Deduct from sender
-        await buyerController.addBalance({
-          platformUserId: interaction.user.id,
-          platform: "Discord",
-          amount: -amount,
-        });
-
-        // Add to recipient
-        await buyerController.addBalance({
-          platformUserId: recipientId,
-          platform: "Discord",
-          amount,
-        });
-
-        return interaction.editReply({
-          content: `<@${interaction.user.id}> successfully sent ${amount} ${
-            amount > 1 ? "tokens" : "token"
-          } to <@${recipientId}>.`,
-        });
-      } catch (err) {
-        console.error(`Error sending balance: ${(err as Error).message}`);
-        return interaction.editReply({
-          content: "Error sending balance",
-        });
-      }
+      return interaction.editReply({
+        content: `Send`,
+      });
   }
 }

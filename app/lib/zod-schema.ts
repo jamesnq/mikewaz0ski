@@ -45,13 +45,19 @@ export const OrderConfirmRequest = z.object({
   orderId: z.string(),
 });
 
-export const GetBalance = z.object({
+export const BuyerSchema = z.object({
   platform: z.nativeEnum($Enums.BuyerPlatform),
   platformUserId: z.string(),
 });
 
-export const AddBalance = z.object({
-  platform: z.nativeEnum($Enums.BuyerPlatform),
-  platformUserId: z.string(),
-  amount: z.number(),
+export const SendBalanceSchema = z.object({
+  amount: z.number().min(1),
+  sendWalletId: z.string(),
+  receiveWalletId: z.string(),
+  type: z.nativeEnum($Enums.TransactionType),
+});
+
+export const AddBalanceSchema = BuyerSchema.extend({
+  amount: z.number().min(1),
+  type: z.nativeEnum($Enums.TransactionType),
 });
