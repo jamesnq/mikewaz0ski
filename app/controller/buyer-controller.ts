@@ -3,258 +3,198 @@ import {
   BuyerSchema,
   SendBalanceSchema,
 } from "@/lib/zod-schema";
+import { formatToken } from "@/services/bot/discord/utils/formatToken";
 import prisma from "@/services/db.server";
-import { Buyer, BuyerPlatform } from "@prisma/client";
 import { z } from "zod";
+import { BuyerPlatform } from "@prisma/client";
 
-class BuyerController {
-  async getBalance(buyerData: z.infer<typeof BuyerSchema>) {
-    const result = BuyerSchema.safeParse(buyerData);
-    if (!result.success) {
-      throw new Error(result.error.message);
-    }
-    const { platform, platformUserId } = result.data;
+// Custom Error Classes
+class WalletNotFoundError extends Error {
+  constructor() {
+    super(
+      `User does not have a wallet. Please create one using the /wallet create command.`
+    );
+    this.name = "WalletNotFoundError";
+  }
+}
+
+class DuplicateWalletError extends Error {
+  constructor() {
+    super("Wallet already exists for this user.");
+    this.name = "DuplicateWalletError";
+  }
+}
+
+class InsufficientBalanceError extends Error {
+  constructor() {
+    super("Insufficient balance.");
+    this.name = "InsufficientBalanceError";
+  }
+}
+
+class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ValidationError";
+  }
+}
+
+class BuyerNotFoundError extends Error {
+  constructor() {
+    super("Buyer not found.");
+    this.name = "BuyerNotFoundError";
+  }
+}
+
+export class BuyerController {
+  // Validates that a wallet exists for the given platform and user ID.
+  async validateWallet(platform: BuyerPlatform, platformUserId: string) {
     const buyer = await prisma.buyer.findUnique({
-      where: {
-        platform_platformUserId: {
-          platform,
-          platformUserId,
-        },
-      },
-      select: {
-        Wallet: {
-          select: {
-            balance: true,
-          },
-        },
-      },
+      where: { platform_platformUserId: { platform, platformUserId } },
+      select: { walletId: true, username: true },
     });
 
-    // Check if buyer exists and return the balance or handle the case where buyer is not found
-    if (!buyer) {
-      throw new Error("Buyer not found");
+    if (!buyer || !buyer.walletId) {
+      throw new WalletNotFoundError();
     }
-    return { balance: !buyer.Wallet ? 0 : buyer.Wallet.balance };
+
+    return { walletId: buyer.walletId, username: buyer.username };
   }
 
-  async sendBalance(sendBalanceData: z.infer<typeof SendBalanceSchema>) {
-    const result = SendBalanceSchema.safeParse(sendBalanceData);
-    if (!result.success) {
-      throw new Error(result.error.message);
-    }
-    const { amount, sendWalletId, receiveWalletId, type } = result.data;
+  async createWallet(buyerData: z.infer<typeof BuyerSchema>) {
+    const result = BuyerSchema.safeParse(buyerData);
+    if (!result.success) throw new ValidationError(result.error.message);
 
-    const sendWallet = await prisma.wallet.findUnique({
-      where: {
-        id: sendWalletId,
-      },
+    const { platform, platformUserId } = result.data;
+
+    const existingBuyer = await prisma.buyer.findUnique({
+      where: { platform_platformUserId: { platform, platformUserId } },
     });
 
-    const receiveWallet = await prisma.wallet.findUnique({
-      where: {
-        id: receiveWalletId,
-      },
-    });
-
-    if (!sendWallet || !receiveWallet) {
-      throw new Error("Invalid wallet");
+    if (existingBuyer?.walletId) {
+      throw new DuplicateWalletError();
     }
 
-    if (sendWallet.balance < amount) {
-      throw new Error("Insufficient balance");
-    }
-
-    await prisma.transactionHistory.create({
-      data: {
-        amount,
-        type: type,
-        sendWalletId,
-        receiveWalletId,
-      },
+    const wallet = await prisma.$transaction(async (prisma) => {
+      const newWallet = await prisma.wallet.create({ data: { balance: 0 } });
+      await prisma.buyer.upsert({
+        where: { platform_platformUserId: { platform, platformUserId } },
+        create: { platform, platformUserId, walletId: newWallet.id },
+        update: { walletId: newWallet.id },
+      });
+      return newWallet;
     });
 
     return {
       success: true,
-      message: `Transferred ${amount} from ${sendWalletId} to ${receiveWalletId}`,
+      message: `Wallet created successfully with ID: ${wallet.id}.`,
     };
   }
 
-  // async adminAddBalance(addBalanceData: z.infer<typeof AddBalanceSchema>) {
-  //   const result = AddBalanceSchema.safeParse(addBalanceData);
-  //   if (!result.success) {
-  //     throw new Error(result.error.message);
-  //   }
-  //   const { platform, platformUserId, amount, type } = result.data;
+  async getBalance(buyerData: z.infer<typeof BuyerSchema>) {
+    const result = BuyerSchema.safeParse(buyerData);
+    if (!result.success) throw new ValidationError(result.error.message);
 
-  //   const user = await prisma.buyer.update({
-  //     where: {
-  //       platform_platformUserId: {
-  //         platform,
-  //         platformUserId,
-  //       },
-  //     },
-  //     data: {
-  //       Wallet: {
-  //         upsert: {
-  //           update: {
-  //             balance: {
-  //               increment: amount,
-  //             },
-  //           },
-  //           create: {
-  //             balance: amount,
-  //           },
-  //         },
-  //       },
-  //     },
-  //     select: {
-  //       id: true,
-  //       Wallet: {
-  //         select: {
-  //           balance: true,
-  //           id: true,
-  //         },
-  //       },
-  //     },
-  //   });
+    const { platform, platformUserId } = result.data;
 
-  //   return {
-  //     success: true,
-  //     message: `Added ${amount} to buyer ${platformUserId}. User new balance is ${
-  //       user.Wallet!.balance
-  //     }`,
-  //   };
-  // }
+    const buyer = await prisma.buyer.findUnique({
+      where: { platform_platformUserId: { platform, platformUserId } },
+      select: { Wallet: { select: { balance: true } } },
+    });
 
-  // async userSendBalance(addBalanceData: z.infer<typeof AddBalanceSchema>) {
-  //   const result = AddBalanceSchema.safeParse(addBalanceData);
-  //   if (!result.success) {
-  //     throw new Error(result.error.message);
-  //   }
-  //   const { platform, platformUserId, amount, type } = result.data;
+    if (!buyer) throw new BuyerNotFoundError();
+    if (!buyer.Wallet) throw new WalletNotFoundError();
 
-  //   const user = await prisma.buyer.update({
-  //     where: {
-  //       platform_platformUserId: {
-  //         platform,
-  //         platformUserId,
-  //       },
-  //     },
-  //     data: {
-  //       Wallet: {
-  //         upsert: {
-  //           update: {
-  //             balance: {
-  //               increment: amount,
-  //             },
-  //           },
-  //           create: {
-  //             balance: amount,
-  //           },
-  //         },
-  //       },
-  //     },
-  //     select: {
-  //       id: true,
-  //       Wallet: {
-  //         select: {
-  //           balance: true,
-  //           id: true,
-  //         },
-  //       },
-  //     },
-  //   });
+    const balance = buyer.Wallet.balance;
+    return {
+      balance,
+      message: `Your current balance is ${balance} ${formatToken(balance)}.`,
+    };
+  }
 
-  //   return {
-  //     success: true,
-  //     message: `Added ${amount} to buyer ${platformUserId}. User new balance is ${
-  //       user.Wallet!.balance
-  //     }`,
-  //   };
-  // }
+  async sendBalance(sendBalanceData: z.infer<typeof SendBalanceSchema>) {
+    const result = SendBalanceSchema.safeParse(sendBalanceData);
+    if (!result.success) throw new ValidationError(result.error.message);
 
-  // async updateAllBuyersBalance(amount: number) {
-  //   try {
-  //     const result = await prisma.buyer.updateMany({
-  //       where: {
-  //         walletId: {
-  //           equals: undefined,
-  //         },
-  //       },
-  //       data: {},
-  //     });
+    const { amount, sendWalletId, receiveWalletId, type } = result.data;
 
-  //     return {
-  //       success: true,
-  //       updatedCount: result.count,
-  //       message: `Updated balance for ${result.count} buyers`,
-  //     };
-  //   } catch (error) {
-  //     return {
-  //       success: false,
-  //       error: `Failed to update balances: ${(error as Error).message}`,
-  //     };
-  //   }
-  // }
+    // Validate both sender and receiver wallets.
+    const [sender, receiver] = await Promise.all([
+      this.validateWallet(BuyerPlatform.Discord, sendWalletId),
+      this.validateWallet(BuyerPlatform.Discord, receiveWalletId),
+    ]);
 
-  // async getBalanceLeaderboard(limit: number = 10) {
-  //   try {
-  //     const leaderboard = await prisma.buyer.findMany({
-  //       select: {
-  //         platformUserId: true,
-  //         Wallet: {
-  //           select: {
-  //             balance: true,
-  //           },
-  //         },
-  //         username: true,
-  //       },
-  //       orderBy: {
-  //         Wallet: {
-  //           balance: "desc",
-  //         },
-  //       },
-  //       take: limit,
-  //     });
+    const sendWallet = await prisma.wallet.findUnique({
+      where: { id: sender.walletId },
+    });
+    const receiveWallet = await prisma.wallet.findUnique({
+      where: { id: receiver.walletId },
+    });
 
-  //     return {
-  //       success: true,
-  //       leaderboard,
-  //     };
-  //   } catch (error) {
-  //     return {
-  //       success: false,
-  //       error: `Failed to fetch leaderboard: ${(error as Error).message}`,
-  //     };
-  //   }
-  // }
+    if (!sendWallet || !receiveWallet) throw new WalletNotFoundError();
+    if (sendWallet.balance < amount) throw new InsufficientBalanceError();
 
-  // async updateAllWallet(): Promise<void> {
-  //   const buyer = await prisma.buyer.findMany({
-  //     where: {
-  //       Wallet: {
-  //         is: null,
-  //       },
-  //     },
-  //   });
+    await prisma.$transaction(async (prisma) => {
+      await prisma.wallet.update({
+        where: { id: sendWallet.id },
+        data: { balance: { decrement: amount } },
+      });
 
-  //   if (buyer.length === 0) {
-  //     return;
-  //   }
-  //   for (const b of buyer) {
-  //     const wallet = await prisma.wallet.create({
-  //       data: {},
-  //     });
-  //     await prisma.buyer.update({
-  //       where: {
-  //         id: b.id,
-  //       },
-  //       data: {
-  //         walletId: wallet.id,
-  //       },
-  //     });
-  //   }
-  // }
+      await prisma.wallet.update({
+        where: { id: receiveWallet.id },
+        data: { balance: { increment: amount } },
+      });
+
+      await prisma.transactionHistory.create({
+        data: {
+          amount,
+          type,
+          sendWalletId: sendWallet.id,
+          receiveWalletId: receiveWallet.id,
+        },
+      });
+    });
+
+    const newSenderBalance = sendWallet.balance - amount;
+    const newReceiverBalance = receiveWallet.balance + amount;
+
+    return {
+      success: true,
+      message: `Successfully sent ${amount} ${formatToken(amount)} from ${
+        sender.username
+      } to ${receiver.username}.
+New sender balance: ${newSenderBalance} ${formatToken(newSenderBalance)}.
+New receiver balance: ${newReceiverBalance} ${formatToken(
+        newReceiverBalance
+      )}.`,
+    };
+  }
+
+  async addBalance(addBalanceData: z.infer<typeof AddBalanceSchema>) {
+    const result = AddBalanceSchema.safeParse(addBalanceData);
+    if (!result.success) throw new ValidationError(result.error.message);
+
+    const { platform, platformUserId, amount, type } = result.data;
+    const { walletId, username } = await this.validateWallet(
+      platform,
+      platformUserId
+    );
+
+    const updatedWallet = await prisma.wallet.update({
+      where: { id: walletId },
+      data: { balance: { increment: amount } },
+    });
+
+    await prisma.transactionHistory.create({
+      data: { amount, type, sendWalletId: null, receiveWalletId: walletId },
+    });
+
+    return {
+      success: true,
+      message: `Added ${amount} ${formatToken(amount)} to ${username}. 
+New balance: ${updatedWallet.balance} ${formatToken(updatedWallet.balance)}.`,
+    };
+  }
 }
 
 export const buyerController = new BuyerController();

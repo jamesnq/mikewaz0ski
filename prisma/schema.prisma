@@ -41,8 +41,8 @@ model TransactionHistory {
   amount          Float
   type            TransactionType
   createdAt       DateTime        @default(now())
-  sendWallet      Wallet          @relation("sendWallet", fields: [sendWalletId], references: [id])
-  sendWalletId    String          @db.ObjectId
+  sendWallet      Wallet?         @relation("sendWallet", fields: [sendWalletId], references: [id])
+  sendWalletId    String?         @db.ObjectId
   receiveWallet   Wallet          @relation("receiveWallet", fields: [receiveWalletId], references: [id])
   receiveWalletId String          @db.ObjectId
 }

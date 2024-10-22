@@ -49,7 +49,10 @@ discordBot.on("interactionCreate", async (interaction: Interaction) => {
   try {
     if (commands[commandName as keyof typeof commands]) {
       if (interaction.isChatInputCommand()) {
-        commands[commandName as keyof typeof commands].execute(interaction);
+        commands[commandName as keyof typeof commands].execute(
+          interaction,
+          discordBot
+        );
       } else {
         console.error(
           `Unsupported interaction type for command: ${commandName}`

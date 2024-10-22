@@ -13,163 +13,175 @@ import {
 } from "node_modules/telegraf/typings/core/types/typegram";
 import { OrderStatus } from "@prisma/client";
 import { embedTemplate } from "./discord/utils/embedTemplate";
+
 const telegramBot = new Telegraf(process.env.TELEGRAM_TOKEN);
+
+const respondImmediately = async (ctx: Context) => {
+  try {
+    await ctx.answerCbQuery(); // Respond quickly to Telegram callback query
+  } catch (err) {
+    console.error("Error responding to callback:", err);
+  }
+};
 
 telegramBot.on("callback_query", async (ctx: Context) => {
   try {
     if (!ctx.callbackQuery || !("data" in ctx.callbackQuery)) return;
-    const data = ctx.callbackQuery.data;
+    const [action, orderId, messageId] = ctx.callbackQuery.data.split("|");
+    const telegramUserId = ctx.from!.id;
+    const telegramUsername = ctx.from!.username
+      ? `@${ctx.from!.username}`
+      : `tg://user?id=${telegramUserId}`;
 
-    if (data.startsWith("take_order")) {
-      const orderId = data.split("|")[1];
-      const messageId = data.split("|")[2];
-      const telegramUserId = ctx.from!.id;
-      const telegramUsername = ctx.from!.username
-        ? `@${ctx.from!.username}`
-        : `tg://user?id=${telegramUserId}`;
+    await respondImmediately(ctx);
 
-      ButtonHandle({
-        ctx: ctx,
-        orderId: orderId,
-        embedTitle: `Order ID ${orderId}`,
-        embedDescription: `Information about your order`,
-        embedFields: [
-          {
-            name: "Status",
-            value: "Processing <a:loading:1283057731321991299>",
-          },
-          {
-            name: "Message",
-            value:
-              "- You will be prompted for a verification code to log in. Please provide the code by once you receive it.",
-          },
-        ],
-        embedThumbnails:
-          "https://cdn.discordapp.com/attachments/1176504635217936425/1283056364469489715/Loading_cat.gif?ex=66e19adb&is=66e0495b&hm=a39c751779340ee91c1abd3d73ab604989e0cd4d262da54e9496ebe989bf4120&",
-        embedColor: 0xffff00,
-        replyMsg: `Đơn ${orderId}\n${telegramUsername} đã nhận đơn.`,
-        messageId: messageId,
-        statusBefore: "InQueue",
-        statusAfter: "InProcess",
-        press: true,
-      });
-    }
+    switch (action) {
+      case "take_order":
+        const dbOrder = await prisma.order.findUnique({
+          where: { id: orderId },
+          include: { Buyer: true },
+        });
 
-    if (data.startsWith("order_verify_code")) {
-      const orderId = data.split("|")[1];
-      const messageId = data.split("|")[2];
-      ButtonHandle({
-        ctx: ctx,
-        orderId: orderId,
-        embedTitle: `Order ID ${orderId}`,
-        embedDescription: `Information about your order`,
-        embedFields: [
-          {
-            name: "Status",
-            value: "Processing <a:loading:1283057731321991299>",
-          },
-          {
-            name: "Message",
-            value:
-              "- Please enter the verification code by **<a:down:1283065340141764710> pressing the button below <a:down:1283065340141764710>**",
-          },
-        ],
-        embedColor: 0xffff00,
-        embedThumbnails:
-          "https://cdn.discordapp.com/attachments/1176504635217936425/1283056364469489715/Loading_cat.gif?ex=66e19adb&is=66e0495b&hm=a39c751779340ee91c1abd3d73ab604989e0cd4d262da54e9496ebe989bf4120&",
-        btnCustomId: `open_order_verify_code`,
-        btnLabel: "Enter Verification Code",
-        messageId,
-        replyMsg: `Đơn ${orderId}:\nYêu cầu lấy code đã được gửi.`,
-      });
-    }
+        // Check if the order is valid and in the correct status to be taken
+        if (!dbOrder || dbOrder.status !== "InQueue") {
+          return await ctx.answerCbQuery(
+            "This order has already been taken or is not valid."
+          );
+        }
+        await ButtonHandle({
+          ctx: ctx,
+          orderId: orderId,
+          embedTitle: `Order ID ${orderId}`,
+          embedDescription: `Information about your order`,
+          embedFields: [
+            {
+              name: "Status",
+              value: "Processing <a:loading:1283057731321991299>",
+            },
+            {
+              name: "Message",
+              value:
+                "- You will be prompted for a verification code to log in. Please provide the code by once you receive it.",
+            },
+          ],
+          embedThumbnails:
+            "https://cdn.discordapp.com/attachments/1176504635217936425/1283056364469489715/Loading_cat.gif?ex=66e19adb&is=66e0495b&hm=a39c751779340ee91c1abd3d73ab604989e0cd4d262da54e9496ebe989bf4120&",
+          embedColor: 0xffff00,
+          replyMsg: `Đơn ${orderId}\n${telegramUsername} đã nhận đơn.`,
+          messageId: messageId,
+          statusBefore: "InQueue",
+          statusAfter: "InProcess",
+          press: true,
+        });
+        break;
+      case "order_verify_code":
+        await ButtonHandle({
+          ctx: ctx,
+          orderId: orderId,
+          embedTitle: `Order ID ${orderId}`,
+          embedDescription: `Information about your order`,
+          embedFields: [
+            {
+              name: "Status",
+              value: "Processing <a:loading:1283057731321991299>",
+            },
+            {
+              name: "Message",
+              value:
+                "- Please enter the verification code by **<a:down:1283065340141764710> pressing the button below <a:down:1283065340141764710>**",
+            },
+          ],
+          embedColor: 0xffff00,
+          embedThumbnails:
+            "https://cdn.discordapp.com/attachments/1176504635217936425/1283056364469489715/Loading_cat.gif?ex=66e19adb&is=66e0495b&hm=a39c751779340ee91c1abd3d73ab604989e0cd4d262da54e9496ebe989bf4120&",
+          btnCustomId: `open_order_verify_code`,
+          btnLabel: "Enter Verification Code",
+          messageId,
+          replyMsg: `Đơn ${orderId}:\nYêu cầu lấy code đã được gửi.`,
+        });
+        break;
 
-    if (data.startsWith("wrong_password")) {
-      const orderId = data.split("|")[1];
-      const messageId = data.split("|")[2];
-      ButtonHandle({
-        ctx: ctx,
-        orderId: orderId,
-        embedTitle: `Order ID ${orderId}`,
-        embedDescription: `Information about your order`,
-        embedFields: [
-          {
-            name: "Status",
-            value: "Processing <a:loading:1283057731321991299>",
-          },
-          {
-            name: "Message",
-            value:
-              "- Your email or password is wrong, please send again by **<a:down:1283065340141764710> pressing the button below <a:down:1283065340141764710>**",
-          },
-        ],
-        embedColor: 0xff0000,
-        embedThumbnails:
-          "https://cdn.discordapp.com/attachments/1176504635217936425/1283056364469489715/Loading_cat.gif?ex=66e19adb&is=66e0495b&hm=a39c751779340ee91c1abd3d73ab604989e0cd4d262da54e9496ebe989bf4120&",
-        btnCustomId: `open_resend_appleid`,
-        btnLabel: "Send Again Apple ID",
-        messageId,
-        replyMsg: `Đơn ${orderId}:\nĐã yêu cầu gửi lại nick.`,
-      });
-    }
+      case "wrong_password":
+        await ButtonHandle({
+          ctx: ctx,
+          orderId: orderId,
+          embedTitle: `Order ID ${orderId}`,
+          embedDescription: `Information about your order`,
+          embedFields: [
+            {
+              name: "Status",
+              value: "Processing <a:loading:1283057731321991299>",
+            },
+            {
+              name: "Message",
+              value:
+                "- Your email or password is wrong, please send again by **<a:down:1283065340141764710> pressing the button below <a:down:1283065340141764710>**",
+            },
+          ],
+          embedColor: 0xff0000,
+          embedThumbnails:
+            "https://cdn.discordapp.com/attachments/1176504635217936425/1283056364469489715/Loading_cat.gif?ex=66e19adb&is=66e0495b&hm=a39c751779340ee91c1abd3d73ab604989e0cd4d262da54e9496ebe989bf4120&",
+          btnCustomId: `open_resend_appleid`,
+          btnLabel: "Send Again Apple ID",
+          messageId,
+          replyMsg: `Đơn ${orderId}:\nĐã yêu cầu gửi lại nick.`,
+        });
+        break;
 
-    if (data.startsWith("notify_in")) {
-      const orderId = data.split("|")[1];
-      const messageId = data.split("|")[2];
-      ButtonHandle({
-        ctx: ctx,
-        orderId: orderId,
-        embedTitle: `Order ID ${orderId}`,
-        embedDescription: `Information about your order`,
-        embedFields: [
-          {
-            name: "Status",
-            value: "Processing <a:loading:1283057731321991299>",
-          },
-          {
-            name: "Message",
-            value: "- We logged in, please be patient order is processing.",
-          },
-        ],
-        embedColor: 0x1e90ff,
-        embedThumbnails:
-          "https://cdn.discordapp.com/attachments/1176504635217936425/1283056364469489715/Loading_cat.gif?ex=66e19adb&is=66e0495b&hm=a39c751779340ee91c1abd3d73ab604989e0cd4d262da54e9496ebe989bf4120&",
-        replyMsg: `Đơn ${orderId}:\nThông báo đăng nhập đã được gửi`,
-        messageId: messageId,
-      });
-    }
+      case "notify_in":
+        await ButtonHandle({
+          ctx: ctx,
+          orderId: orderId,
+          embedTitle: `Order ID ${orderId}`,
+          embedDescription: `Information about your order`,
+          embedFields: [
+            {
+              name: "Status",
+              value: "Processing <a:loading:1283057731321991299>",
+            },
+            {
+              name: "Message",
+              value: "- We logged in, please be patient order is processing.",
+            },
+          ],
+          embedColor: 0x1e90ff,
+          embedThumbnails:
+            "https://cdn.discordapp.com/attachments/1176504635217936425/1283056364469489715/Loading_cat.gif?ex=66e19adb&is=66e0495b&hm=a39c751779340ee91c1abd3d73ab604989e0cd4d262da54e9496ebe989bf4120&",
+          replyMsg: `Đơn ${orderId}:\nThông báo đăng nhập đã được gửi`,
+          messageId: messageId,
+        });
+        break;
 
-    if (data.startsWith("order_finish")) {
-      const orderId = data.split("|")[1];
-      const messageId = data.split("|")[2];
-      ButtonHandle({
-        ctx: ctx,
-        orderId: orderId,
-        embedTitle: `Order ID ${orderId}`,
-        embedDescription: `Information about your order`,
-        embedFields: [
-          {
-            name: "Status",
-            value: "Completed <a:check_gif:1175065179864698930>",
-          },
-          {
-            name: "Message",
-            value:
-              "- Your order has completed. Thanks for your purchase, please vouch for us! <a:mt_yayyy:1282967627685298176>",
-          },
-        ],
-        embedThumbnails:
-          "https://cdn.discordapp.com/attachments/1178944867536216124/1283075750702092443/mission-complete-spongebob.gif?ex=66e1ace9&is=66e05b69&hm=3a4e3f8360ddfe8a73105182fabfa884abd988e6332b02bacaa580c95bf69567&",
-        embedColor: 0x32cd32,
-        replyMsg: `Đơn ${orderId}:\nTrạng thái: Đã hoàn thành`,
-        messageId: messageId,
-        statusBefore: "InProcess",
-        statusAfter: "Completed",
-      });
+      case "order_finish":
+        await ButtonHandle({
+          ctx: ctx,
+          orderId: orderId,
+          embedTitle: `Order ID ${orderId}`,
+          embedDescription: `Information about your order`,
+          embedFields: [
+            {
+              name: "Status",
+              value: "Completed <a:check_gif:1175065179864698930>",
+            },
+            {
+              name: "Message",
+              value:
+                "- Your order has completed. Thanks for your purchase, please vouch for us! <a:mt_yayyy:1282967627685298176>",
+            },
+          ],
+          embedThumbnails:
+            "https://cdn.discordapp.com/attachments/1178944867536216124/1283075750702092443/mission-complete-spongebob.gif?ex=66e1ace9&is=66e05b69&hm=3a4e3f8360ddfe8a73105182fabfa884abd988e6332b02bacaa580c95bf69567&",
+          embedColor: 0x32cd32,
+          replyMsg: `Đơn ${orderId}:\nTrạng thái: Đã hoàn thành`,
+          messageId: messageId,
+          statusBefore: "InProcess",
+          statusAfter: "Completed",
+        });
+        break;
     }
   } catch (err) {
-    ctx.reply("Lỗi khi ấn nút");
-    console.error(err);
+    console.error("Error handling callback:", err);
+    await ctx.answerCbQuery("Đã xảy ra lỗi trong quá trình xử lý.");
   }
 });
 
