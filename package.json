@@ -13,8 +13,7 @@
 		"start": "cross-env NODE_ENV=production node ./server.js",
 		"typecheck": "tsc",
 		"deploy-commands": "npx tsx ./app/services/bot/discord/deploy-commands.ts",
-		"delete-commands": "npx tsx ./app/services/bot/discord/delete-commands.ts",
-		"get-commands": "npx tsx ./app/services/bot/discord/get-commands.ts"
+		"delete-commands": "npx tsx ./app/services/bot/discord/delete-commands.ts"
 	},
 	"dependencies": {
 		"@prisma/client": "^5.19.1",
