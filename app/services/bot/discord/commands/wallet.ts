@@ -14,6 +14,7 @@ class NonExistentWalletError extends WalletError {}
 class DuplicateWalletError extends WalletError {}
 class InsufficientBalanceError extends WalletError {}
 class InvalidAmountError extends WalletError {}
+class SelfTransferError extends WalletError {}
 
 // Function to notify the transaction channel if it exists.
 async function notifyTransaction(
@@ -133,6 +134,10 @@ export async function execute(
       case "send":
         const recipient = interaction.options.getUser("user")!;
         const sendAmount = interaction.options.getNumber("amount")!;
+
+        if (recipient.id === interaction.user.id) {
+          throw new SelfTransferError("You cannot send tokens to yourself.");
+        }
 
         if (sendAmount <= 0) {
           throw new InvalidAmountError("Amount must be greater than zero.");
