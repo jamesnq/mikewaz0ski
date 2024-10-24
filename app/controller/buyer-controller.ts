@@ -155,18 +155,11 @@ export class BuyerController {
       });
     });
 
-    const newSenderBalance = sendWallet.balance - amount;
-    const newReceiverBalance = receiveWallet.balance + amount;
-
     return {
       success: true,
       message: `Successfully sent ${amount} ${formatToken(amount)} from ${
         sender.username
-      } to ${receiver.username}.
-New sender balance: ${newSenderBalance} ${formatToken(newSenderBalance)}.
-New receiver balance: ${newReceiverBalance} ${formatToken(
-        newReceiverBalance
-      )}.`,
+      } to ${receiver.username}.`,
     };
   }
 
