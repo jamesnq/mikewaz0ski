@@ -15,7 +15,7 @@ class DuplicateWalletError extends WalletError {}
 class InsufficientBalanceError extends WalletError {}
 class InvalidAmountError extends WalletError {}
 class SelfTransferError extends WalletError {}
-
+class UnauthorizedError extends WalletError {}
 // Function to notify the transaction channel if it exists.
 async function notifyTransaction(
   client: Client,
@@ -85,7 +85,7 @@ export async function execute(
   interaction: ChatInputCommandInteraction,
   client: Client
 ) {
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply();
   const subcommand = interaction.options.getSubcommand();
   const guildId = interaction.guildId!;
 
@@ -108,7 +108,16 @@ export async function execute(
       case "get":
         const targetUser =
           interaction.options.getUser("user") || interaction.user;
+        // Check if the user is trying to get someone else's balance.
+        const isCheckingOtherUser = targetUser.id !== interaction.user.id;
 
+        // If it's another user's balance, ensure the requester has permission.
+        if (
+          isCheckingOtherUser &&
+          !discordConfig.confirmOrder.users.includes(interaction.user.id)
+        ) {
+          throw new UnauthorizedError();
+        }
         try {
           const balance = await buyerController.getBalance({
             platform: "Discord",
@@ -179,8 +188,8 @@ export async function execute(
           interaction.options.getUser("user") || interaction.user;
         const addAmount = interaction.options.getNumber("amount")!;
 
-        if (addAmount <= 0) {
-          throw new InvalidAmountError("Amount must be greater than zero.");
+        if (!discordConfig.confirmOrder.users.includes(interaction.user.id)) {
+          throw new UnauthorizedError();
         }
 
         try {
