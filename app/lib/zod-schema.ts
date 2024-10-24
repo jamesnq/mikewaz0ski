@@ -58,6 +58,6 @@ export const SendBalanceSchema = z.object({
 });
 
 export const AddBalanceSchema = BuyerSchema.extend({
-  amount: z.number().min(1),
+  amount: z.number(),
   type: z.nativeEnum($Enums.TransactionType),
 });
