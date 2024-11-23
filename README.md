@@ -1,79 +1,121 @@
-# Welcome to Remix + Vite + shadcn/ui!
+# Digital Marketplace Bot
 
-📖 See the [Remix docs](https://remix.run/docs) and the [Remix Vite docs](https://remix.run/docs/en/main/future/vite) for details on supported features.
+A multi-platform digital goods marketplace bot that supports Discord, Telegram, and Facebook platforms. Built with Remix, Vite, and shadcn/ui for a modern and responsive experience.
 
-## Getting Started
+## Features
 
-Node Server:
+- 🤖 Multi-platform support (Discord, Telegram, Facebook)
+- 💰 Digital wallet system with transaction history
+- 🛍️ Digital goods marketplace
+- 🎮 Support for various digital products:
+  - Brawl Coins
+  - YouTube Premium
+  - Spotify
+  - Discord Nitro
+- 💳 Wallet-to-wallet transfers
+- 📊 Order management system
+- 🎨 Built-in theme switcher (Light/Dark mode)
 
-```sh
-npx create-remix@latest --template jacob-ebey/remix-shadcn
+## Tech Stack
+
+- **Frontend**: Remix + Vite + shadcn/ui
+- **Backend**: Node.js + Express
+- **Database**: MongoDB with Prisma ORM
+- **Bot Frameworks**: 
+  - Discord.js
+  - Telegraf
+- **Styling**: Tailwind CSS
+- **Type Safety**: TypeScript
+- **Code Quality**: Biome
+
+## Prerequisites
+
+- Node.js >= 18.0.0
+- MongoDB database
+- Platform API keys (Discord, Telegram, Facebook)
+
+## Environment Setup
+
+1. Create a `.env` file in the root directory
+2. Add the following environment variables:
+```env
+MONGO_URI=your_mongodb_connection_string
+# Add other platform-specific API keys
 ```
-
-Cloudflare Pages:
-
-```shellscript
-npx create-remix@latest --template https://github.com/jacob-ebey/remix-shadcn/tree/cloudflare
-```
-
-Or for a more flushed out template with a login flow and a SQLite database backed by Drizzle ORM:
-
-Node Server:
-
-```shellscript
-npx create-remix@latest --template https://github.com/jacob-ebey/remix-shadcn/tree/drizzle
-```
-
-Cloudflare Pages:
-
-```shellscript
-npx create-remix@latest --template https://github.com/jacob-ebey/remix-shadcn/tree/drizzle-cloudflare
-```
-
-## Built in theme switcher
-
-![image](https://github.com/jacob-ebey/remix-shadcn/assets/12063586/c6ed812c-764f-46b7-af30-26284f55535c)
-
-![image](https://github.com/jacob-ebey/remix-shadcn/assets/12063586/4e378230-3b4b-4b78-8af4-096b30aacf79)
 
 ## Development
 
-Run the Vite dev server:
+1. Install dependencies:
+```sh
+npm install
+```
 
+2. Generate Prisma client and push database schema:
+```sh
+npm run prisma-build
+```
+
+3. Start the development server:
 ```sh
 npm run dev
 ```
 
+For active development with auto-reload:
+```sh
+npm run watch
+```
+
 ## Deployment
 
-First, build your app for production:
-
+1. Build the application:
 ```sh
 npm run build
 ```
 
-Setup your environment:
-
-```sh
-NODE_ENV='production'
-```
-
-Then run the app in production mode:
-
+2. Start in production mode:
 ```sh
 npm start
 ```
 
-Now you'll need to pick a host to deploy it to.
+## Bot Commands
 
-### DIY
+### Deploy Discord Commands
+```sh
+npm run deploy-commands
+```
 
-If you're familiar with deploying Node applications, the built-in Remix app server is production-ready.
+### Remove Discord Commands
+```sh
+npm run delete-commands
+```
 
-Make sure to deploy the output of `npm run build` and the server
+## Code Quality
 
-- `server.js`
-- `build/server`
-- `build/client`
+Run linting:
+```sh
+npm run lint
+```
 
-Take a look at the provided Dockerfile for further details on how to configure a production environment.
+Apply automatic fixes:
+```sh
+npm run fix
+```
+
+## Type Checking
+
+```sh
+npm run typecheck
+```
+
+## Docker Support
+
+A Dockerfile is included for containerized deployment. Build and run using:
+
+```sh
+docker build -t digital-marketplace-bot .
+docker run -p 3000:3000 digital-marketplace-bot
+```
+
+## License
+
+Private repository - All rights reserved
